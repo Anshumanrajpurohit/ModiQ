@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
+import Image from "next/image";
+import companyLogo from "@/public/images/company-logo.png";
 
 const navLinks = [
   { label: "Home", href: "/" },
@@ -25,16 +27,23 @@ export function Navbar() {
   }, [isMenuOpen]);
 
   const isActive = (href: string) =>
-    href === "/"
-      ? pathname === "/"
-      : pathname.startsWith(href);
+    href === "/" ? pathname === "/" : pathname.startsWith(href);
 
   return (
     <header className="fixed inset-x-0 top-0 z-50 border-b border-[#9B9B9B]/40 bg-[#FFFFFF]/90 backdrop-blur-xl">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4 text-[#4A4A4A]">
-        <Link href="/" className="text-lg font-semibold tracking-[0.2em] uppercase">
-          MODIQ HARDWARE
+        <Link
+          href="/"
+          className="text-lg font-semibold tracking-[0.2em] uppercase"
+        >
+          <Image
+            src={companyLogo}
+            alt="ModiQ Hardware"
+            className="h-8 w-auto"
+            priority
+          />
         </Link>
+
         <nav className="hidden items-center gap-1 md:flex">
           {navLinks.map((link) => (
             <Link
@@ -53,12 +62,15 @@ export function Navbar() {
             </Link>
           ))}
         </nav>
+
         <Link
           href="/cart"
           className="hidden rounded-full border border-[#A5B867] bg-[#A5B867] px-6 py-2 text-sm font-semibold text-[#4A4A4A] transition hover:bg-[#FFFFFF] md:inline-flex"
         >
           View Cart
         </Link>
+
+        {/* Mobile Menu Button */}
         <button
           className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#9B9B9B]/40 md:hidden"
           onClick={() => setIsMenuOpen(true)}
@@ -71,6 +83,8 @@ export function Navbar() {
           </span>
         </button>
       </div>
+
+      {/* Mobile Menu */}
       <AnimatePresence>
         {isMenuOpen && (
           <motion.div
@@ -96,6 +110,8 @@ export function Navbar() {
                   Close
                 </button>
               </div>
+
+              {/* Mobile Links */}
               <div className="flex flex-col gap-2">
                 {navLinks.map((link) => (
                   <Link
@@ -103,7 +119,9 @@ export function Navbar() {
                     href={link.href}
                     className={
                       "rounded-2xl px-4 py-3 text-lg transition hover:bg-[#A5B867]/10 " +
-                      (isActive(link.href) ? "bg-[#A5B867]/15 text-[#A5B867]" : "")
+                      (isActive(link.href)
+                        ? "bg-[#A5B867]/15 text-[#A5B867]"
+                        : "")
                     }
                     onClick={() => setIsMenuOpen(false)}
                   >
@@ -111,6 +129,8 @@ export function Navbar() {
                   </Link>
                 ))}
               </div>
+
+              {/* Footer Contact Info */}
               <div className="mt-auto space-y-2 text-sm text-[#9B9B9B]">
                 <p className="font-semibold text-[#4A4A4A]">Contact</p>
                 <p>+91 99880 11223</p>

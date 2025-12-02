@@ -5,6 +5,7 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { FloatingWhatsApp } from "@/components/FloatingWhatsApp";
 import { CartProvider } from "@/context/CartContext";
+import { SiteAnnouncement } from "@/components/SiteAnnouncement";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -38,6 +39,7 @@ export default function RootLayout({
           </main>
           <Footer />
           <FloatingWhatsApp />
+          <SiteAnnouncement />
         </CartProvider>
       </body>
     </html>

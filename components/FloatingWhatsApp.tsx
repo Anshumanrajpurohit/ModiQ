@@ -1,3 +1,6 @@
+import Image from "next/image";
+import WhatsAppIcon from "@/public/icons/whatsapp.svg";
+
 export function FloatingWhatsApp() {
   return (
     <a
@@ -7,7 +10,13 @@ export function FloatingWhatsApp() {
       target="_blank"
       rel="noreferrer"
     >
-      <span>WhatsApp</span>
+      <Image
+        src={WhatsAppIcon}
+        alt="WhatsApp"
+        width={24}
+        height={24}
+        className="h-6 w-6"
+      />
     </a>
   );
 }
