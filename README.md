@@ -25,18 +25,18 @@ Modern marketing, catalog, cart, and partner-auth experience for a luxury archit
 | Animation | Framer Motion | `Reveal` component manages scroll-triggered motions, while sliders/panels rely on simple hooks. |
 | State | React Context (`context/CartContext.tsx`) | Manages cart items, totals, synthetic order history, and provides helper functions to UI modules. |
 | Data | Local TypeScript modules (`data/`) | Currently seeds categories and products; drop-in replacement with API calls when backend is connected. |
+| Backend | Express + Mongo (see `backend/`) | Stores Clerk user profiles, exposes `/api/users` + `/api/webhooks/clerk`, and syncs data for future cart/order APIs. |
 | Popup | `SiteAnnouncement` | Globally mounted in `app/layout.tsx` to show a login card overlay after a timed delay. |
 
-### Backend & Integration Plan
+### Backend Overview
 
-The current repo focuses on the front-of-house experience. Backend integration is intentionally decoupled so that you can:
+`backend/` now ships with an Express server (ES modules) that connects to MongoDB via Mongoose, verifies Clerk webhooks, and exposes helper endpoints:
 
-1. **Plug in REST/GraphQL APIs** – swap the `data/` utilities for fetchers hitting your Node/Express, NestJS, or Strapi endpoints.
-2. **Wire cart/order persistence** – replace `CartContext`’s in-memory arrays with API mutations (e.g., `/api/cart`, `/api/orders`).
-3. **Handle authentication** – hook the login/register forms to your auth provider (NextAuth, Cognito, custom JWT). The form structure already includes all partner data fields.
-4. **Serve assets** – host product imagery in S3, Cloudinary, or your existing CMS and update the `image` paths in `data/products.ts` accordingly.
+1. `POST /api/users/sync` (protected by `x-backend-token`) – used by the Next.js handoff page to upsert partners after login/registration.
+2. `GET /api/users` – inspect synced partners (extendable for dashboards).
+3. `POST /api/webhooks/clerk` – add this URL to a Clerk Webhook so native events keep MongoDB updated.
 
-Add your backend inside the repo (e.g., `/api` or `/server`) or keep it as a separate service—the frontend only depends on typed helpers, so touching `data/` and context hooks is enough to bridge the systems.
+From there you can bolt on catalogue, orders, or analytics routes and point the frontend data hooks at them.
 
 ## 🚀 Getting Started
 
@@ -45,6 +45,7 @@ Add your backend inside the repo (e.g., `/api` or `/server`) or keep it as a sep
 npm install
 
 # run dev server (http://localhost:3000)
+npm run dev
 
 
 # lint using the Next.js + Tailwind config
@@ -52,15 +53,33 @@ npm run lint
 
 # create a production build
 npm run build && npm start
+
+# ---- backend ----
+cd backend
+npm install
+npm run dev # http://localhost:4000
 ```
 
 ### Environment Variables
 
-No secrets are required for the static data version. When you connect real services, create a `.env.local` file (already covered by `.gitignore`) with entries such as:
+Frontend (`.env.local`):
 
 ```
-API_BASE_URL=https://api.example.com
-NEXT_PUBLIC_WHATSAPP=+919988011223
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
+CLERK_SECRET_KEY=sk_test_...
+BACKEND_URL=http://localhost:4000
+BACKEND_SYNC_TOKEN=modiq-sync-token
+```
+
+Backend (`backend/.env`, copy from `.env.example`):
+
+```
+PORT=4000
+MONGODB_URI=mongodb+srv://...
+MONGODB_DB_NAME=modiq
+BACKEND_SYNC_TOKEN=modiq-sync-token
+CLERK_WEBHOOK_SECRET=whsec_...
+FRONTEND_URL=http://localhost:3000
 ```
 
 ## 📁 Key Directories
@@ -69,6 +88,7 @@ NEXT_PUBLIC_WHATSAPP=+919988011223
 - `components/` – Reusable UI (Hero, PromoBanner, ProductPurchasePanel, AuthCard, SiteAnnouncement, Reveal, etc.).
 - `context/CartContext.tsx` – Cart and orders state management plus helper actions.
 - `data/` – Static catalog/category data objects; ideal touchpoint for backend integration.
+- `backend/` – Express + Mongo service for Clerk webhooks and future catalogue/order APIs.
 - `public/images` + `public/icons` – Marketing imagery and vector assets.
 
 ## 🧪 Testing Checklist

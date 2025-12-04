@@ -20,7 +20,7 @@ export default function LoginPage() {
           </div>
         </Reveal>
         <Reveal delay={0.1}>
-          <AuthCard variant="login" />
+          <AuthCard initialVariant="login" />
         </Reveal>
       </div>
     </div>

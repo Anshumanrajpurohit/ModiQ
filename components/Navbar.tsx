@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 import companyLogo from "@/public/images/company-logo.png";
 
 const navLinks = [
@@ -63,12 +64,32 @@ export function Navbar() {
           ))}
         </nav>
 
-        <Link
-          href="/cart"
-          className="hidden rounded-full border border-[#A5B867] bg-[#A5B867] px-6 py-2 text-sm font-semibold text-[#4A4A4A] transition hover:bg-[#FFFFFF] md:inline-flex"
-        >
-          View Cart
-        </Link>
+        <div className="hidden items-center gap-3 md:flex">
+          <Link
+            href="/cart"
+            className="rounded-full border border-[#A5B867] bg-[#A5B867] px-6 py-2 text-sm font-semibold text-[#4A4A4A] transition hover:bg-[#FFFFFF]"
+          >
+            View Cart
+          </Link>
+          <SignedOut>
+            <Link
+              href="/login"
+              className="rounded-full border border-[#9B9B9B]/60 px-5 py-2 text-sm font-semibold uppercase tracking-wider text-[#4A4A4A] transition hover:bg-[#F4F4F4]"
+            >
+              Login
+            </Link>
+          </SignedOut>
+          <SignedIn>
+            <UserButton
+              afterSignOutUrl="/"
+              appearance={{
+                elements: {
+                  avatarBox: "h-10 w-10",
+                },
+              }}
+            />
+          </SignedIn>
+        </div>
 
         {/* Mobile Menu Button */}
         <button
@@ -128,6 +149,23 @@ export function Navbar() {
                     {link.label}
                   </Link>
                 ))}
+              </div>
+
+              <div className="flex items-center gap-3">
+                <SignedOut>
+                  <Link
+                    href="/login"
+                    className="flex-1 rounded-2xl border border-[#A5B867] px-4 py-3 text-center text-sm font-semibold uppercase tracking-wide text-[#4A4A4A]"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Login
+                  </Link>
+                </SignedOut>
+                <SignedIn>
+                  <div className="rounded-2xl border border-[#E0E0E0] p-2">
+                    <UserButton afterSignOutUrl="/" />
+                  </div>
+                </SignedIn>
               </div>
 
               {/* Footer Contact Info */}

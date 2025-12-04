@@ -31,3 +31,30 @@ a {
   background: var(--color-accent);
   color: #ffffff;
 }
+
+.auth-modal-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #6f9a1a transparent;
+  scroll-behavior: smooth;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.auth-modal-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.auth-modal-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.auth-modal-scroll::-webkit-scrollbar-thumb {
+  background-color: #6f9a1a;
+  border-radius: 999px;
+  border: 0 solid transparent;
+}
+
+.auth-modal-scroll::-webkit-scrollbar-button {
+  display: none;
+  height: 0;
+}

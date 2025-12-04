@@ -20,7 +20,7 @@ export default function RegisterPage() {
           </div>
         </Reveal>
         <Reveal delay={0.1}>
-          <AuthCard variant="register" />
+          <AuthCard initialVariant="register" />
         </Reveal>
       </div>
     </div>
