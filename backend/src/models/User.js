@@ -11,6 +11,7 @@ const userSchema = new mongoose.Schema(
     phoneNumber: { type: String },
     role: { type: String, default: "partner" },
     studio: { type: String },
+    company: { type: String },
     lastLoginAt: { type: Date },
     deletedAt: { type: Date },
   },

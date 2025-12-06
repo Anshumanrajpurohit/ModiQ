@@ -69,6 +69,7 @@ NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
 CLERK_SECRET_KEY=sk_test_...
 BACKEND_URL=http://localhost:4000
 BACKEND_SYNC_TOKEN=modiq-sync-token
+ADMIN_EMAILS=admin@modiq.test
 ```
 
 Backend (`backend/.env`, copy from `.env.example`):
@@ -81,6 +82,17 @@ BACKEND_SYNC_TOKEN=modiq-sync-token
 CLERK_WEBHOOK_SECRET=whsec_...
 FRONTEND_URL=http://localhost:3000
 ```
+
+### Test Login Profiles
+
+Create the following users inside the Clerk dashboard (Email & Password exactly as listed). After the first login they will automatically sync into MongoDB with the right `role`.
+
+| Role | Email | Password | Display name |
+| --- | --- | --- | --- |
+| Admin | `admin@modiq.test` | `Admin#2024!` | `Aanya Admin` |
+| Customer | `customer@modiq.test` | `Partner#2024!` | `Caleb Customer` |
+
+> Clerk owns password storage; there is no `password` column in the Mongo `User` collection. If you need to seed Mongo manually, insert a document with `clerkUserId`, `email`, and `role` fields, then let the `/auth/complete` sync overwrite the rest on next login.
 
 ## 📁 Key Directories
 

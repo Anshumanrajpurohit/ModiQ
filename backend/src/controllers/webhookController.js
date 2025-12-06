@@ -3,6 +3,7 @@ import { User } from "../models/User.js";
 
 function upsertFromEvent(data) {
   const email = data.email_addresses?.find((entry) => entry.id === data.primary_email_address_id) ?? data.email_addresses?.[0];
+  const metadata = data.unsafe_metadata ?? {};
 
   return User.updateOne(
     { clerkUserId: data.id },
@@ -13,7 +14,9 @@ function upsertFromEvent(data) {
         lastName: data.last_name ?? "",
         fullName: [data.first_name, data.last_name].filter(Boolean).join(" "),
         imageUrl: data.image_url ?? null,
-        phoneNumber: data.phone_numbers?.[0]?.phone_number ?? null,
+        phoneNumber: data.phone_numbers?.[0]?.phone_number ?? metadata.phoneNumber ?? null,
+        studio: metadata.company ?? metadata.studio ?? "",
+        company: metadata.company ?? metadata.studio ?? "",
         lastLoginAt: new Date(),
         deletedAt: null,
       },
