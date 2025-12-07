@@ -1,5 +1,19 @@
-import { redirect } from "next/navigation";
+import { redirect } from "next/navigation"
 
-export default function LoginPage() {
-  redirect("/sign-in?redirect_url=/auth/complete");
+type LoginPageProps = {
+  searchParams?: {
+    next?: string
+    returnTo?: string
+  }
+}
+
+const sanitizeNext = (value?: string) => {
+  if (!value) return "/"
+  return value.startsWith("/") ? value : "/"
+}
+
+export default function LoginPage({ searchParams }: LoginPageProps) {
+  const safeNext = sanitizeNext(searchParams?.next || searchParams?.returnTo)
+  const params = new URLSearchParams({ next: safeNext })
+  redirect(`/sgp?${params.toString()}`)
 }

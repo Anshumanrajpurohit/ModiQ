@@ -2,11 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
-import { Navbar } from "@/components/Navbar";
-import { Footer } from "@/components/Footer";
-import { FloatingWhatsApp } from "@/components/FloatingWhatsApp";
 import { CartProvider } from "@/context/CartContext";
-import { SiteAnnouncement } from "@/components/SiteAnnouncement";
+import { AppShell } from "@/components/AppShell";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -39,13 +36,7 @@ export default function RootLayout({
           className={`${geistSans.variable} ${geistMono.variable} bg-[#FFFFFF] text-[#4A4A4A] antialiased`}
         >
           <CartProvider>
-            <Navbar />
-            <main className="mx-auto mt-24 max-w-6xl px-6 pb-24">
-              {children}
-            </main>
-            <Footer />
-            <FloatingWhatsApp />
-            <SiteAnnouncement />
+            <AppShell>{children}</AppShell>
           </CartProvider>
         </body>
       </html>

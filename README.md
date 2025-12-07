@@ -13,7 +13,7 @@ Modern marketing, catalog, cart, and partner-auth experience for a luxury archit
 - **Interactive product detail:** hero image, specification modal, quick-order card with cart preview, and contextual CTA routing.
 - **Cart + order tracking:** `CartContext` centralizes selections, quantity updates, orders history, and powers the `/cart` dashboard plus local ProductPurchasePanel state.
 - **Auth journey:** dedicated `/login` and `/register` routes mirror the reference design, including social sign-on buttons, contextual helper text, and full registration fields.
-- **Timed engagement popup:** after ~6 seconds a login card appears globally (`SiteAnnouncement`), giving partners a gentle nudge without needing a close icon.
+- **Timed engagement popup:** after ~5 seconds a Clerk-aware overlay (`LoginPrompt`) invites signed-out visitors to `/sgp` while letting them dismiss and keep browsing.
 - **Support surface:** floating WhatsApp CTAs, request quote cards, and animated hero actions keep sales channels prominent.
 
 ## 🧱 Architecture
@@ -24,19 +24,8 @@ Modern marketing, catalog, cart, and partner-auth experience for a luxury archit
 | Styling | Tailwind CSS v4 (via `@tailwindcss/postcss`) | Palette customized to brand colors; gradients and glassmorphism handled via utility compositions. |
 | Animation | Framer Motion | `Reveal` component manages scroll-triggered motions, while sliders/panels rely on simple hooks. |
 | State | React Context (`context/CartContext.tsx`) | Manages cart items, totals, synthetic order history, and provides helper functions to UI modules. |
-| Data | Local TypeScript modules (`data/`) | Currently seeds categories and products; drop-in replacement with API calls when backend is connected. |
-| Backend | Express + Mongo (see `backend/`) | Stores Clerk user profiles, exposes `/api/users` + `/api/webhooks/clerk`, and syncs data for future cart/order APIs. |
-| Popup | `SiteAnnouncement` | Globally mounted in `app/layout.tsx` to show a login card overlay after a timed delay. |
-
-### Backend Overview
-
-`backend/` now ships with an Express server (ES modules) that connects to MongoDB via Mongoose, verifies Clerk webhooks, and exposes helper endpoints:
-
-1. `POST /api/users/sync` (protected by `x-backend-token`) – used by the Next.js handoff page to upsert partners after login/registration.
-2. `GET /api/users` – inspect synced partners (extendable for dashboards).
-3. `POST /api/webhooks/clerk` – add this URL to a Clerk Webhook so native events keep MongoDB updated.
-
-From there you can bolt on catalogue, orders, or analytics routes and point the frontend data hooks at them.
+| Data | Local TypeScript modules (`data/`) | Currently seeds categories and products; ready to swap once a remote data service is available. |
+| Popup | `LoginPrompt` | Globally mounted in `app/layout.tsx` to nudge signed-out visitors after a timed delay. |
 
 ## 🚀 Getting Started
 
@@ -53,11 +42,6 @@ npm run lint
 
 # create a production build
 npm run build && npm start
-
-# ---- backend ----
-cd backend
-npm install
-npm run dev # http://localhost:4000
 ```
 
 ### Environment Variables
@@ -66,47 +50,35 @@ Frontend (`.env.local`):
 
 ```
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
+NEXT_PUBLIC_CLERK_FRONTEND_API=shining-egret-48.clerk.accounts.dev
 CLERK_SECRET_KEY=sk_test_...
-BACKEND_URL=http://localhost:4000
-BACKEND_SYNC_TOKEN=modiq-sync-token
+CLERK_API_URL=https://api.clerk.com
 ADMIN_EMAILS=admin@modiq.test
-```
-
-Backend (`backend/.env`, copy from `.env.example`):
-
-```
-PORT=4000
-MONGODB_URI=mongodb+srv://...
-MONGODB_DB_NAME=modiq
-BACKEND_SYNC_TOKEN=modiq-sync-token
-CLERK_WEBHOOK_SECRET=whsec_...
-FRONTEND_URL=http://localhost:3000
 ```
 
 ### Test Login Profiles
 
-Create the following users inside the Clerk dashboard (Email & Password exactly as listed). After the first login they will automatically sync into MongoDB with the right `role`.
+Create the following users inside the Clerk dashboard (Email & Password exactly as listed) to exercise both admin and partner flows. Manage their roles straight from Clerk or via its APIs.
 
 | Role | Email | Password | Display name |
 | --- | --- | --- | --- |
 | Admin | `admin@modiq.test` | `Admin#2024!` | `Aanya Admin` |
 | Customer | `customer@modiq.test` | `Partner#2024!` | `Caleb Customer` |
 
-> Clerk owns password storage; there is no `password` column in the Mongo `User` collection. If you need to seed Mongo manually, insert a document with `clerkUserId`, `email`, and `role` fields, then let the `/auth/complete` sync overwrite the rest on next login.
+> Clerk owns password storage; manage user roles directly from the Clerk dashboard or via its APIs.
 
 ## 📁 Key Directories
 
 - `app/` – App Router pages and layouts (`/`, `/products`, `/login`, `/register`, `/cart`, etc.).
 - `components/` – Reusable UI (Hero, PromoBanner, ProductPurchasePanel, AuthCard, SiteAnnouncement, Reveal, etc.).
 - `context/CartContext.tsx` – Cart and orders state management plus helper actions.
-- `data/` – Static catalog/category data objects; ideal touchpoint for backend integration.
-- `backend/` – Express + Mongo service for Clerk webhooks and future catalogue/order APIs.
+- `data/` – Static catalog/category data objects; ideal touchpoint for future integrations.
 - `public/images` + `public/icons` – Marketing imagery and vector assets.
 
 ## 🧪 Testing Checklist
 
 - ✅ Visual regression via manual review (desktop + mobile breakpoints).
-- 🔜 Hook up unit/UI testing (e.g., Vitest + Testing Library) once backend endpoints stabilize.
+- 🔜 Hook up unit/UI testing (e.g., Vitest + Testing Library) once the UI flows stabilize.
 
 ## 📌 Roadmap Ideas
 
@@ -114,13 +86,13 @@ Create the following users inside the Clerk dashboard (Email & Password exactly 
 - Replace static datasets with remote CMS/ERP feeds.
 - Add dashboard analytics widgets for partner accounts.
 - Introduce product comparison + downloadables (CAD/PDF).
-- Harden auth flow with OTP/email verification when backend is ready.
+- Harden auth flow with OTP/email verification.
 
 ## 🤝 Contributing
 
 1. Fork, branch (`git checkout -b feature/amazing`), and make your changes.
 2. Run `npm run lint` to keep things tidy.
-3. Open a PR describing UI/UX impact plus any backend touchpoints.
+3. Open a PR describing UI/UX impact plus any integration touchpoints.
 
 ## 📄 License
 

@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
-import { SignedIn, UserButton } from "@clerk/nextjs";
+import { SignedOut } from "@clerk/nextjs";
 import companyLogo from "@/public/images/company-logo.png";
+import { NavUserAvatar } from "@/components/NavUserAvatar";
 
 const navLinks = [
   { label: "Home", href: "/" },
@@ -19,6 +20,11 @@ const navLinks = [
 export function Navbar() {
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const loginHref = useMemo(() => {
+    const path = pathname || "/";
+    const encoded = encodeURIComponent(path);
+    return `/sgp?returnTo=${encoded}`;
+  }, [pathname]);
 
   useEffect(() => {
     document.body.style.overflow = isMenuOpen ? "hidden" : "";
@@ -71,16 +77,15 @@ export function Navbar() {
           >
             View Cart
           </Link>
-          <SignedIn>
-            <UserButton
-              afterSignOutUrl="/"
-              appearance={{
-                elements: {
-                  avatarBox: "h-10 w-10",
-                },
-              }}
-            />
-          </SignedIn>
+          <NavUserAvatar />
+          <SignedOut>
+            <Link
+              href={loginHref}
+              className="rounded-full border border-[#4A4A4A]/20 px-4 py-2 text-sm font-semibold text-[#4A4A4A] transition hover:border-[#A5B867] hover:text-[#A5B867]"
+            >
+              Login
+            </Link>
+          </SignedOut>
         </div>
 
         {/* Mobile Menu Button */}
@@ -144,11 +149,16 @@ export function Navbar() {
               </div>
 
               <div className="flex items-center gap-3">
-                <SignedIn>
-                  <div className="w-full rounded-2xl border border-[#E0E0E0] p-2">
-                    <UserButton afterSignOutUrl="/" />
-                  </div>
-                </SignedIn>
+                <NavUserAvatar />
+                <SignedOut>
+                  <Link
+                    href={loginHref}
+                    className="w-full rounded-2xl border border-[#E0E0E0] px-4 py-3 text-center text-sm font-semibold"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Sign In
+                  </Link>
+                </SignedOut>
               </div>
 
               {/* Footer Contact Info */}

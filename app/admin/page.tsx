@@ -18,7 +18,7 @@ export default async function AdminPage() {
   const user = await currentUser();
 
   if (!user) {
-    redirect("/login");
+    redirect("/sgp");
   }
 
   const primaryEmail =
@@ -37,8 +37,8 @@ export default async function AdminPage() {
       <p className="text-xs uppercase tracking-[0.5em] text-[#D4AF37]">Admin Portal</p>
       <h1 className="text-4xl font-semibold">Welcome, {fullName}</h1>
       <p className="max-w-2xl text-sm text-[#6F6F6F]">
-        You are signed in with admin privileges. The production management console lives inside the backend
-        service; this page simply confirms that elevated access is active.
+        You are signed in with admin privileges. A dedicated management console will surface here once the
+        remaining tooling ships; for now this page simply confirms that elevated access is active.
       </p>
     </section>
   );
