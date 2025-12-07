@@ -5,9 +5,9 @@ import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
-import { SignedOut } from "@clerk/nextjs";
 import companyLogo from "@/public/images/company-logo.png";
 import { NavUserAvatar } from "@/components/NavUserAvatar";
+import { useAuth } from "@/context/AuthContext";
 
 const navLinks = [
   { label: "Home", href: "/" },
@@ -20,10 +20,11 @@ const navLinks = [
 export function Navbar() {
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user } = useAuth();
   const loginHref = useMemo(() => {
     const path = pathname || "/";
     const encoded = encodeURIComponent(path);
-    return `/sgp?returnTo=${encoded}`;
+    return `/login?next=${encoded}`;
   }, [pathname]);
 
   useEffect(() => {
@@ -77,15 +78,16 @@ export function Navbar() {
           >
             View Cart
           </Link>
-          <NavUserAvatar />
-          <SignedOut>
+          {user ? (
+            <NavUserAvatar />
+          ) : (
             <Link
               href={loginHref}
               className="rounded-full border border-[#4A4A4A]/20 px-4 py-2 text-sm font-semibold text-[#4A4A4A] transition hover:border-[#A5B867] hover:text-[#A5B867]"
             >
               Login
             </Link>
-          </SignedOut>
+          )}
         </div>
 
         {/* Mobile Menu Button */}
@@ -149,8 +151,9 @@ export function Navbar() {
               </div>
 
               <div className="flex items-center gap-3">
-                <NavUserAvatar />
-                <SignedOut>
+                {user ? (
+                  <NavUserAvatar />
+                ) : (
                   <Link
                     href={loginHref}
                     className="w-full rounded-2xl border border-[#E0E0E0] px-4 py-3 text-center text-sm font-semibold"
@@ -158,7 +161,7 @@ export function Navbar() {
                   >
                     Sign In
                   </Link>
-                </SignedOut>
+                )}
               </div>
 
               {/* Footer Contact Info */}

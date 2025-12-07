@@ -9,7 +9,7 @@ import { FloatingWhatsApp } from "@/components/FloatingWhatsApp"
 import { SiteAnnouncement } from "@/components/SiteAnnouncement"
 import { LoginPrompt } from "@/components/LoginPrompt"
 
-const BARE_ROUTES = ["/sgp", "/login", "/register", "/auth/complete"]
+const BARE_ROUTES = ["/login", "/forgot-password"]
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname()

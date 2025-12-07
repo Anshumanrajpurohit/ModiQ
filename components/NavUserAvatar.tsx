@@ -1,10 +1,10 @@
 "use client"
 
-import Link from "next/link"
-import { SignedIn, useUser } from "@clerk/nextjs"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useMemo } from "react"
+import { useAuth } from "@/context/AuthContext"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 
-function getInitials(name?: string | null) {
+function getInitials(name?: string) {
   if (!name) return "M"
   return name
     .split(" ")
@@ -16,26 +16,29 @@ function getInitials(name?: string | null) {
 }
 
 export function NavUserAvatar() {
-  const { user } = useUser()
-  const initials = getInitials(user?.fullName)
+  const { user, logout } = useAuth()
+  const initials = useMemo(() => getInitials(user?.displayName), [user?.displayName])
+
+  if (!user) {
+    return null
+  }
 
   return (
-    <SignedIn>
-      <Link
-        href="/"
-        className="group inline-flex items-center gap-2 rounded-full border border-transparent px-2 py-1 transition hover:border-[#A5B867]/60"
-        aria-label="Open account menu"
+    <div className="group inline-flex items-center gap-3 rounded-full border border-transparent px-3 py-1 transition hover:border-[#A5B867]/60">
+      <Avatar className="h-9 w-9 border border-[#A5B867]/50 bg-white">
+        <AvatarFallback className="text-xs font-semibold uppercase text-[#4A4A4A]">{initials}</AvatarFallback>
+      </Avatar>
+      <div className="flex flex-col text-xs font-semibold uppercase tracking-wide text-[#4A4A4A]">
+        <span className="text-[11px] text-[#A5B867]">{user.role}</span>
+        <span>{user.displayName}</span>
+      </div>
+      <button
+        type="button"
+        onClick={logout}
+        className="rounded-full border border-[#E0E0E0] px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-[#4A4A4A] transition hover:border-[#A5B867] hover:text-[#A5B867]"
       >
-        <Avatar className="h-9 w-9 border border-[#A5B867]/50 bg-white">
-          <AvatarImage src={user?.imageUrl ?? undefined} alt={user?.fullName ?? "Account avatar"} />
-          <AvatarFallback className="text-xs font-semibold uppercase text-[#4A4A4A]">
-            {initials}
-          </AvatarFallback>
-        </Avatar>
-        <span className="text-xs font-semibold uppercase tracking-wide text-[#4A4A4A] group-hover:text-[#A5B867]">
-          {user?.firstName ?? "Account"}
-        </span>
-      </Link>
-    </SignedIn>
+        Logout
+      </button>
+    </div>
   )
 }
