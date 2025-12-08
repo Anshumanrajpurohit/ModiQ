@@ -59,7 +59,7 @@ export function ProductPurchasePanel({ productName, productId, priceLabel, unitP
 
   return (
     <>
-      <section className="rounded-3xl border border-[#9B9B9B]/40 bg-[#FFFFFF] p-6 text-[#4A4A4A] shadow-lg shadow-[#4A4A4A]/5">
+      <section className="text-[#4A4A4A]">
       <div className="flex flex-col gap-3 border-b border-[#F0F0F0] pb-5">
         <p className="text-xs uppercase tracking-[0.4em] text-[#A5B867]">Quick Order</p>
         <h3 className="text-2xl font-semibold">{productName}</h3>

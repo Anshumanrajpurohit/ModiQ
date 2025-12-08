@@ -69,7 +69,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
                 <SpecDetailList title="Specifications" items={product.specs} />
                 <SpecDetailList title="Highlights" items={product.highlights} />
               </div>
-              <div className="mt-10 rounded-3xl border border-[#E0E0E0]/60 bg-white p-4">
+              <div className="mt-10 rounded-3xl border border-[#9B9B9B]/40 bg-[#FFFFFF] p-6 text-[#4A4A4A] shadow-lg shadow-[#4A4A4A]/5">
                 <ProductPurchasePanel
                   productName={product.name}
                   productId={product.id}
