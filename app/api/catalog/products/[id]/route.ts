@@ -22,7 +22,6 @@ export async function PUT(request: NextRequest, context: RouteContext) {
         image: payload.image,
         price: payload.price,
         specs: payload.specs,
-        sizes: payload.sizes,
         highlights: payload.highlights,
       })
       .eq("id", params.id)
