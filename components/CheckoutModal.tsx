@@ -76,7 +76,7 @@ export function CheckoutModal({ open, onClose, onSubmit, isSubmitting }: Checkou
               setFormState((prev) => ({ ...prev, contactNumber: event.target.value }))
             }
             className="mt-1 w-full rounded-2xl border border-white/15 bg-black/30 px-4 py-2"
-            placeholder="+91 89966 99603"
+            placeholder="+91 86699 33603"
           />
         </label>
         <label className="block text-sm">

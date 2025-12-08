@@ -12,7 +12,7 @@ export default function ContactPage() {
       <div className="grid gap-6 md:grid-cols-3">
         <div>
           <p className="text-sm text-[#999999]">Call</p>
-          <p className="text-lg font-semibold">+91 99880 11223</p>
+          <p className="text-lg font-semibold">+91 86699 33603</p>
         </div>
         <div>
           <p className="text-sm text-[#999999]">Email</p>

@@ -19,7 +19,7 @@ export function Footer() {
           </p>
           <div className="mt-4 text-sm text-[#FFFFFF]">
             <p>Contact</p>
-            <p className="text-[#9B9B9B]">+91 99880 11223</p>
+            <p className="text-[#9B9B9B]">+91 86699 33603</p>
             <p className="text-[#9B9B9B]">hello@modiqhardware.com</p>
           </div>
         </div>
@@ -39,7 +39,7 @@ export function Footer() {
             Plot 21, Industrial Estate, Mumbai, India
           </p>
           <a
-            href="https://wa.me/919988011223"
+            href="https://wa.me/918669933603"
             className="mt-4 inline-flex items-center gap-2 rounded-full border border-[#A5B867] px-4 py-2 text-sm text-[#A5B867] transition hover:bg-[#A5B867] hover:text-[#4A4A4A]"
             target="_blank"
             rel="noreferrer"

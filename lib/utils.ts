@@ -7,8 +7,8 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export const SUPPORT_PHONE_E164 = "+918996699603"
-export const SUPPORT_PHONE_DISPLAY = "+91 89966 99603"
+export const SUPPORT_PHONE_E164 = "+918669933603"
+export const SUPPORT_PHONE_DISPLAY = "+91 86699 33603"
 
 export function buildWhatsAppOrderMessage(details: CheckoutDetails, cartItems: CartItem[]) {
   const header = [
