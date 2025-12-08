@@ -121,6 +121,19 @@ export function Navbar() {
           )}
         </div>
 
+        <div className="flex items-center gap-3 md:hidden">
+          <button
+            type="button"
+            onClick={() => setIsMenuOpen((prev) => !prev)}
+            className="flex h-10 w-10 flex-col items-center justify-center rounded-full border border-[#4A4A4A]/20 text-[#4A4A4A] transition hover:border-[#A5B867] hover:text-[#A5B867] dark:border-white/20 dark:text-white dark:hover:border-[#c4d677] dark:hover:text-[#c4d677]"
+            aria-label="Toggle navigation menu"
+          >
+            <span className="block h-0.5 w-5 rounded bg-current" />
+            <span className="mt-1 block h-0.5 w-5 rounded bg-current" />
+            <span className="mt-1 block h-0.5 w-5 rounded bg-current" />
+          </button>
+        </div>
+
       </div>
       {/* Mobile Menu */}
       <AnimatePresence>

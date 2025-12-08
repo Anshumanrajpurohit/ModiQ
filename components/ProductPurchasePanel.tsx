@@ -140,7 +140,7 @@ export function ProductPurchasePanel({ productName, productId, priceLabel, unitP
             </a>
           </p>
         </div>
-        <div className="rounded-2xl border border-[#9B9B9B]/40 bg-[#F8F8F8] p-4">
+        <div className="space-y-3 border border-transparent md:border-l md:border-[#E5E5E5] md:pl-6">
           <div className="mb-3 flex items-center justify-between">
             <p className="text-sm font-semibold">Orders</p>
             <span className="text-xs text-[#9B9B9B]">{orders.length} order(s)</span>
