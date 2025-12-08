@@ -5,7 +5,7 @@ import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { FormEvent, useMemo, useState } from "react"
 
-import { MOCK_CREDENTIALS, useAuth } from "@/context/AuthContext"
+import { useAuth } from "@/context/AuthContext"
 
 const hardwareImages = {
   one: "/images/top-right-login.png",
@@ -29,8 +29,8 @@ export default function LoginPage() {
     [searchParams]
   )
 
-  const [email, setEmail] = useState(MOCK_CREDENTIALS[0]?.email ?? "")
-  const [password, setPassword] = useState(MOCK_CREDENTIALS[0]?.password ?? "")
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
@@ -59,16 +59,6 @@ export default function LoginPage() {
     setTimeout(() => {
       router.replace(nextDestination)
     }, 1200)
-  }
-
-  const handleMockFill = (role: "admin" | "customer") => {
-    const credential = MOCK_CREDENTIALS.find((entry) => entry.role === role)
-    if (!credential) return
-    setEmail(credential.email)
-    setPassword(credential.password)
-    setLogoLabel(role === "admin" ? "ADMIN" : "CUSTOMER")
-    setError(null)
-    setSuccessMessage(null)
   }
 
   return (
@@ -408,16 +398,7 @@ export default function LoginPage() {
           <div className="tagline">modern & unique</div>
 
           <div className="welcome-text">Welcome to Luxury</div>
-          <div className="welcome-subtext">Use the mock credentials to explore the partner showroom.</div>
-
-          <div className="mock-credentials">
-            {MOCK_CREDENTIALS.map((mock) => (
-              <button key={mock.role} type="button" onClick={() => handleMockFill(mock.role)}>
-                <span>{mock.role}</span>
-                {mock.email} / {mock.password}
-              </button>
-            ))}
-          </div>
+          <div className="welcome-subtext">Enter your access credentials to explore the partner showroom.</div>
 
           {error && (
             <p className="status-message error" role="alert">
