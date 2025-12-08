@@ -49,11 +49,13 @@ npm run build && npm start
 Frontend (`.env.local`):
 
 ```
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
-NEXT_PUBLIC_CLERK_FRONTEND_API=shining-egret-48.clerk.accounts.dev
-CLERK_SECRET_KEY=sk_test_...
-CLERK_API_URL=https://api.clerk.com
-ADMIN_EMAILS=admin@modiq.test
+
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_publishable_key_here
+NEXT_PUBLIC_CLERK_FRONTEND_API=your_clerk_frontend_api_here
+CLERK_SECRET_KEY=your_clerk_secret_key_here
+CLERK_API_URL=your_clerk_api_url_here
+ADMIN_EMAILS=admin@example.com
+
 ```
 
 ### Test Login Profiles
