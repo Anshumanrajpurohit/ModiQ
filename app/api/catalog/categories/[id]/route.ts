@@ -1,11 +1,16 @@
-import { NextResponse } from "next/server"
+import { NextResponse, type NextRequest } from "next/server"
 
 import { mapCategoryRow } from "@/lib/catalog-utils"
 import { createSupabaseServiceRoleClient } from "@/lib/supabase"
 import { CategoryValidationError, parseCategoryPayload } from "../validator"
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+type RouteContext = {
+  params: Promise<{ id: string }>
+}
+
+export async function PUT(request: NextRequest, context: RouteContext) {
   try {
+    const params = await context.params
     const payload = await parseCategoryPayload(request)
     const supabase = createSupabaseServiceRoleClient()
     const { data, error } = await supabase
