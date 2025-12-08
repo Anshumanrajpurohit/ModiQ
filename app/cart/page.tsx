@@ -1,40 +1,68 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { useCart } from "@/context/CartContext";
+import { CheckoutModal } from "@/components/CheckoutModal";
+import type { CheckoutDetails } from "@/types/checkout";
+import { buildWhatsAppOrderMessage, SUPPORT_PHONE_DISPLAY, SUPPORT_PHONE_E164 } from "@/lib/utils";
 
 export default function CartPage() {
   const { cartItems, orders, totalAmount, updateQuantity, removeFromCart, placeOrder } = useCart();
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
 
-  const handlePlaceOrder = () => {
-    const { message } = placeOrder();
-    window.alert(message);
+  const openCheckout = () => {
+    if (!cartItems.length) {
+      window.alert("Your cart is empty. Add products before placing an order.");
+      return;
+    }
+    setIsCheckoutOpen(true);
+  };
+
+  const submitCheckout = (details: CheckoutDetails) => {
+    if (!cartItems.length) {
+      window.alert("Your cart is empty. Add products before placing an order.");
+      setIsCheckoutOpen(false);
+      return;
+    }
+    setIsSubmittingOrder(true);
+    const message = buildWhatsAppOrderMessage(details, cartItems);
+    const whatsappUrl = `https://wa.me/${SUPPORT_PHONE_E164.replace("+", "")}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, "_blank", "noopener,noreferrer");
+    placeOrder();
+    setIsSubmittingOrder(false);
+    setIsCheckoutOpen(false);
   };
 
   return (
-    <div className="space-y-10">
-      <section className="rounded-3xl bg-[#FFFFFF] p-6 text-[#4A4A4A] shadow-xl shadow-[#4A4A4A]/10">
-        <p className="text-sm uppercase tracking-[0.4em] text-[#A5B867]">Cart Overview</p>
-        <h1 className="mt-3 text-3xl font-bold">Your selected hardware</h1>
-        <p className="mt-2 text-sm text-[#999999]">
-          Review quantities, adjust selections, and proceed to place or trace orders from a single dashboard.
-        </p>
-      </section>
+    <>
+      <div className="space-y-10">
+        <section className="rounded-3xl bg-[#FFFFFF] p-6 text-[#4A4A4A] shadow-xl shadow-[#4A4A4A]/10">
+          <p className="text-sm uppercase tracking-[0.4em] text-[#A5B867]">Cart Overview</p>
+          <h1 className="mt-3 text-3xl font-bold">Your selected hardware</h1>
+          <p className="mt-2 text-sm text-[#999999]">
+            Review quantities, adjust selections, and proceed to place or trace orders from a single dashboard.
+          </p>
+          <p className="mt-4 text-sm font-semibold text-[#4A4A4A]">
+            WhatsApp / Call support: <a href={`tel:${SUPPORT_PHONE_E164}`} className="text-[#A5B867]">{SUPPORT_PHONE_DISPLAY}</a>
+          </p>
+        </section>
 
-      <section className="rounded-3xl bg-[#FFFFFF] p-6 shadow-lg shadow-[#4A4A4A]/5">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
+        <section className="rounded-3xl bg-[#FFFFFF] p-6 shadow-lg shadow-[#4A4A4A]/5">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
             <p className="text-sm uppercase tracking-[0.4em] text-[#A5B867]">Cart</p>
             <h2 className="mt-2 text-2xl font-semibold">{cartItems.length ? "Items in your cart" : "Cart is empty"}</h2>
+            </div>
+            <Link
+              href="/products"
+              className="rounded-full border border-[#9B9B9B]/40 px-5 py-2 text-sm font-semibold text-[#4A4A4A] transition hover:border-[#A5B867]"
+            >
+              Continue shopping
+            </Link>
           </div>
-          <Link
-            href="/products"
-            className="rounded-full border border-[#9B9B9B]/40 px-5 py-2 text-sm font-semibold text-[#4A4A4A] transition hover:border-[#A5B867]"
-          >
-            Continue shopping
-          </Link>
-        </div>
-        <div className="mt-6 space-y-4">
+          <div className="mt-6 space-y-4">
           {cartItems.length ? (
             cartItems.map((item) => (
               <div
@@ -43,6 +71,9 @@ export default function CartPage() {
               >
                 <div>
                   <p className="text-base font-semibold text-[#4A4A4A]">{item.name}</p>
+                  {item.categoryLabel && (
+                    <p className="text-[11px] uppercase tracking-[0.3em] text-[#666]">{item.categoryLabel}</p>
+                  )}
                   <p className="text-xs uppercase tracking-[0.4em] text-[#A5B867]">{item.id}</p>
                 </div>
                 <div className="flex items-center gap-3">
@@ -81,24 +112,24 @@ export default function CartPage() {
               Add items from the catalog to see them here.
             </p>
           )}
-        </div>
-      </section>
+          </div>
+        </section>
 
-      <section className="grid gap-6 md:grid-cols-2">
-        <div className="rounded-3xl bg-[#FFFFFF] p-6 shadow-lg shadow-[#4A4A4A]/5">
+        <section className="grid gap-6 md:grid-cols-2">
+          <div className="rounded-3xl bg-[#FFFFFF] p-6 shadow-lg shadow-[#4A4A4A]/5">
           <p className="text-sm uppercase tracking-[0.4em] text-[#A5B867]">Place Order</p>
           <h2 className="mt-2 text-2xl font-semibold">Ready to confirm?</h2>
           <p className="mt-2 text-sm text-[#999999]">Subtotal</p>
           <p className="text-3xl font-bold text-[#4A4A4A]">₹{totalAmount.toLocaleString("en-IN")}</p>
           <button
             type="button"
-            onClick={handlePlaceOrder}
+            onClick={openCheckout}
             className="mt-6 w-full rounded-full bg-[#4A4A4A] px-6 py-3 text-sm font-semibold uppercase tracking-wide text-white transition hover:bg-black"
           >
             Place Order
           </button>
-        </div>
-        <div className="rounded-3xl bg-[#FFFFFF] p-6 shadow-lg shadow-[#4A4A4A]/5">
+          </div>
+          <div className="rounded-3xl bg-[#FFFFFF] p-6 shadow-lg shadow-[#4A4A4A]/5">
           <p className="text-sm uppercase tracking-[0.4em] text-[#A5B867]">Trace Orders</p>
           <h2 className="mt-2 text-2xl font-semibold">Latest updates</h2>
           <div className="mt-4 space-y-4">
@@ -126,8 +157,15 @@ export default function CartPage() {
               </p>
             )}
           </div>
-        </div>
-      </section>
-    </div>
+          </div>
+        </section>
+      </div>
+      <CheckoutModal
+        open={isCheckoutOpen}
+        onClose={() => setIsCheckoutOpen(false)}
+        onSubmit={submitCheckout}
+        isSubmitting={isSubmittingOrder}
+      />
+    </>
   );
 }

@@ -27,6 +27,7 @@ export function Navbar() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
   const loginHref = useMemo(() => {
@@ -41,6 +42,10 @@ export function Navbar() {
       document.body.style.overflow = "";
     };
   }, [isMenuOpen]);
+
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
   const navLinks = isAdmin ? ADMIN_NAV_LINKS : PUBLIC_NAV_LINKS;
 
@@ -100,32 +105,23 @@ export function Navbar() {
               View Cart
             </Link>
           )}
-          {user ? (
-            <NavUserAvatar />
+          {isHydrated ? (
+            user ? (
+              <NavUserAvatar />
+            ) : (
+              <Link
+                href={loginHref}
+                className="rounded-full border border-[#4A4A4A]/20 px-4 py-2 text-sm font-semibold text-[#4A4A4A] transition hover:border-[#A5B867] hover:text-[#A5B867] dark:border-white/20 dark:text-white dark:hover:border-[#c4d677] dark:hover:text-[#c4d677]"
+              >
+                Login
+              </Link>
+            )
           ) : (
-            <Link
-              href={loginHref}
-              className="rounded-full border border-[#4A4A4A]/20 px-4 py-2 text-sm font-semibold text-[#4A4A4A] transition hover:border-[#A5B867] hover:text-[#A5B867] dark:border-white/20 dark:text-white dark:hover:border-[#c4d677] dark:hover:text-[#c4d677]"
-            >
-              Login
-            </Link>
+            <div className="h-10 w-24 rounded-full border border-transparent bg-[#4A4A4A]/10" aria-hidden />
           )}
         </div>
 
-        {/* Mobile Menu Button */}
-        <button
-          className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#9B9B9B]/40 dark:border-white/20 md:hidden"
-          onClick={() => setIsMenuOpen(true)}
-          aria-label="Open menu"
-        >
-          <span className="flex flex-col gap-1.5">
-            <span className="block h-0.5 w-5 bg-[#4A4A4A] dark:bg-white" />
-            <span className="block h-0.5 w-5 bg-[#4A4A4A] dark:bg-white" />
-            <span className="block h-0.5 w-5 bg-[#4A4A4A] dark:bg-white" />
-          </span>
-        </button>
       </div>
-
       {/* Mobile Menu */}
       <AnimatePresence>
         {isMenuOpen && (
@@ -174,23 +170,26 @@ export function Navbar() {
 
               <div className="flex items-center gap-3">
                 <ThemeToggle />
-                {user ? (
-                  <NavUserAvatar />
+                {isHydrated ? (
+                  user ? (
+                    <NavUserAvatar />
+                  ) : (
+                    <Link
+                      href={loginHref}
+                      className="w-full rounded-2xl border border-[#E0E0E0] px-4 py-3 text-center text-sm font-semibold dark:border-white/20"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Sign In
+                    </Link>
+                  )
                 ) : (
-                  <Link
-                    href={loginHref}
-                    className="w-full rounded-2xl border border-[#E0E0E0] px-4 py-3 text-center text-sm font-semibold dark:border-white/20"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Sign In
-                  </Link>
+                  <div className="h-12 w-full rounded-2xl border border-transparent bg-[#4A4A4A]/10" aria-hidden />
                 )}
               </div>
 
               {/* Footer Contact Info */}
               <div className="mt-auto space-y-2 text-sm text-[#9B9B9B]">
                 <p className="font-semibold text-[#4A4A4A]">Contact</p>
-                <p>+91 99880 11223</p>
                 <p>hello@modiqhardware.com</p>
                 <p>Plot 21, Industrial Estate, Mumbai</p>
               </div>

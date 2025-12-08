@@ -1,8 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
-import type { Category } from "@/data/categories";
+import type { CatalogCategory } from "@/types/catalog";
 
-export function CategoryCard({ category }: { category: Category }) {
+export function CategoryCard({ category }: { category: CatalogCategory }) {
   return (
     <Link
       href={`/products/${category.id}`}

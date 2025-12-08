@@ -1,8 +1,11 @@
 import { Hero } from "@/components/Hero";
 import { Reveal } from "@/components/Reveal";
-import { categories } from "@/data/categories";
+import { fetchCategories } from "@/lib/catalog";
 
-export default function AboutPage() {
+export const revalidate = 0;
+
+export default async function AboutPage() {
+  const categories = await fetchCategories();
   return (
     <div className="space-y-16">
       <Reveal>
@@ -13,14 +16,20 @@ export default function AboutPage() {
         <p className="mt-4 text-sm text-[#999999]">
           For over a decade, ModiQ has delivered premium motion systems built around three pillars: durability, design, and daily usability. Every hinge, channel, and drawer system undergoes rigorous testing for corrosion resistance, life-cycle endurance, and load stability to ensure that designers deliver luxury experiences that last.
         </p>
-        <div className="mt-6 grid gap-6 md:grid-cols-3">
-          {categories.slice(0, 3).map((category) => (
-            <div key={category.id} className="rounded-2xl border border-[#9B9B9B]/40 bg-[#FFFFFF] p-4">
-              <p className="text-sm uppercase tracking-[0.3em] text-[#A5B867]">{category.name}</p>
-              <p className="mt-2 text-sm text-[#999999]">{category.description}</p>
-            </div>
-          ))}
-        </div>
+        {categories.length ? (
+          <div className="mt-6 grid gap-6 md:grid-cols-3">
+            {categories.slice(0, 3).map((category) => (
+              <div key={category.id} className="rounded-2xl border border-[#9B9B9B]/40 bg-[#FFFFFF] p-4">
+                <p className="text-sm uppercase tracking-[0.3em] text-[#A5B867]">{category.name}</p>
+                <p className="mt-2 text-sm text-[#999999]">{category.description}</p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="mt-6 rounded-2xl border border-[#9B9B9B]/40 bg-[#FFFFFF] px-5 py-10 text-center text-sm text-[#999999]">
+            We will showcase hero categories once they are created inside the admin deck.
+          </p>
+        )}
       </Reveal>
       <Reveal className="grid gap-6 md:grid-cols-2">
         {["Durable", "Rust-proof", "Premium", "Long Life"].map((value) => (

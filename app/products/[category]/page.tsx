@@ -1,22 +1,14 @@
 import { notFound } from "next/navigation";
-import { categories, getCategoryById } from "@/data/categories";
-import { getProductsByCategory } from "@/data/products";
 import { ProductGrid } from "@/components/ProductGrid";
 import { Reveal } from "@/components/Reveal";
+import { fetchCategoryById, fetchProductsByCategory } from "@/lib/catalog";
 
-export async function generateStaticParams() {
-  return categories.map((category) => ({ category: category.id }));
-}
+export const revalidate = 0;
 
-export default async function CategoryPage({
-  params,
-}: {
-  params: Promise<{ category: string }>;
-}) {
-  const resolvedParams = await params;
-  const category = getCategoryById(resolvedParams.category);
+export default async function CategoryPage({ params }: { params: { category: string } }) {
+  const category = await fetchCategoryById(params.category);
   if (!category) return notFound();
-  const filteredProducts = getProductsByCategory(category.id);
+  const filteredProducts = await fetchProductsByCategory(category.id);
 
   return (
     <div className="space-y-10">

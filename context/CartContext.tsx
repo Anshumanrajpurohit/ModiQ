@@ -2,11 +2,12 @@
 
 import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
 
-type CartItem = {
+export type CartItem = {
   id: string;
   name: string;
   price: number;
   quantity: number;
+  categoryLabel?: string;
 };
 
 type Order = {
@@ -39,7 +40,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
       if (existing) {
         return prev.map((entry) =>
           entry.id === item.id
-            ? { ...entry, quantity: entry.quantity + item.quantity }
+            ? {
+                ...entry,
+                quantity: entry.quantity + item.quantity,
+                categoryLabel: entry.categoryLabel ?? item.categoryLabel,
+              }
             : entry,
         );
       }

@@ -2,10 +2,8 @@
 
 import Image from "next/image"
 import { useRouter, useSearchParams } from "next/navigation"
-import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react"
+import { ChangeEvent, FormEvent, useCallback, useEffect, useMemo, useState } from "react"
 
-import { categories as categorySeed } from "@/data/categories"
-import { products as productSeed } from "@/data/products"
 import { useAuth } from "@/context/AuthContext"
 
 type AdminView = "categories" | "products"
@@ -20,11 +18,10 @@ type AdminCategory = {
 
 type AdminProduct = {
   id: string
-  category: string
+  categoryId: string
   name: string
-  price?: number
+  price: number | null
   specs: string[]
-  sizes: string[]
   image: string
   description: string
   highlights: string[]
@@ -46,7 +43,6 @@ type ProductFormData = {
   image: string
   price: string
   specs: string
-  sizes: string
   highlights: string
 }
 
@@ -89,15 +85,8 @@ const emptyProductForm: ProductFormData = {
   image: "",
   price: "",
   specs: "",
-  sizes: "",
   highlights: "",
 }
-
-const slugify = (value: string) =>
-  value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "")
 
 const parseList = (value: string) =>
   value
@@ -154,24 +143,14 @@ export default function AdminPage() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null)
   const [categoryModal, setCategoryModal] = useState<CategoryModalState>(null)
   const [productModal, setProductModal] = useState<ProductModalState>(null)
-  const [categoryList, setCategoryList] = useState<AdminCategory[]>(() =>
-    categorySeed.map((category) => ({
-      id: category.id,
-      name: category.name,
-      heroLine: category.heroLine,
-      description: category.description,
-      image: category.image,
-    }))
-  )
-  const [productMap, setProductMap] = useState<Record<string, AdminProduct[]>>(() => {
-    const initial: Record<string, AdminProduct[]> = {}
-    categorySeed.forEach((category) => {
-      initial[category.id] = productSeed
-        .filter((product) => product.category === category.id)
-        .map((product) => ({ ...product }))
-    })
-    return initial
-  })
+  const [categoryList, setCategoryList] = useState<AdminCategory[]>([])
+  const [productMap, setProductMap] = useState<Record<string, AdminProduct[]>>({})
+  const [isLoadingCategories, setIsLoadingCategories] = useState(true)
+  const [loadingCategoryId, setLoadingCategoryId] = useState<string | null>(null)
+  const [actionMessage, setActionMessage] = useState<string | null>(null)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [isCategorySaving, setIsCategorySaving] = useState(false)
+  const [isProductSaving, setIsProductSaving] = useState(false)
 
   useEffect(() => {
     if (!user) {
@@ -183,6 +162,69 @@ export default function AdminPage() {
       router.replace("/")
     }
   }, [router, user])
+
+  const handleApiError = useCallback((error: unknown) => {
+    console.error("admin.api", error)
+    setErrorMessage(error instanceof Error ? error.message : "Unexpected Supabase error.")
+  }, [])
+
+  useEffect(() => {
+    if (!errorMessage) return
+    const timer = window.setTimeout(() => setErrorMessage(null), 4000)
+    return () => window.clearTimeout(timer)
+  }, [errorMessage])
+
+  useEffect(() => {
+    if (!actionMessage) return
+    const timer = window.setTimeout(() => setActionMessage(null), 3000)
+    return () => window.clearTimeout(timer)
+  }, [actionMessage])
+
+  const fetchCategories = useCallback(async () => {
+    setIsLoadingCategories(true)
+    try {
+      const response = await fetch("/api/catalog/categories")
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) {
+        throw new Error(payload?.error ?? "Unable to load categories")
+      }
+      setCategoryList(payload.categories ?? [])
+      setErrorMessage(null)
+    } catch (error) {
+      handleApiError(error)
+    } finally {
+      setIsLoadingCategories(false)
+    }
+  }, [handleApiError])
+
+  useEffect(() => {
+    fetchCategories()
+  }, [fetchCategories])
+
+  const fetchProductsForCategory = useCallback(
+    async (categoryId: string) => {
+      setLoadingCategoryId(categoryId)
+      try {
+        const response = await fetch(`/api/catalog/products?category=${categoryId}`)
+        const payload = await response.json().catch(() => ({}))
+        if (!response.ok) {
+          throw new Error(payload?.error ?? "Unable to load products")
+        }
+        setProductMap((previous) => ({ ...previous, [categoryId]: payload.products ?? [] }))
+      } catch (error) {
+        handleApiError(error)
+      } finally {
+        setLoadingCategoryId((current) => (current === categoryId ? null : current))
+      }
+    },
+    [handleApiError]
+  )
+
+  useEffect(() => {
+    if (!selectedCategoryId) return
+    if (productMap[selectedCategoryId]) return
+    fetchProductsForCategory(selectedCategoryId)
+  }, [fetchProductsForCategory, productMap, selectedCategoryId])
 
   const selectedCategory = useMemo(() => {
     if (!selectedCategoryId) return null
@@ -233,9 +275,8 @@ export default function AdminPage() {
           name: product.name,
           description: product.description,
           image: product.image,
-          price: product.price ? String(product.price) : "",
+              price: product.price !== null ? String(product.price) : "",
           specs: product.specs.join(", "),
-          sizes: product.sizes.join(", "),
           highlights: product.highlights.join(", "),
         },
       })
@@ -249,78 +290,151 @@ export default function AdminPage() {
     })
   }
 
-  const handleCategorySubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleCategorySubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (!categoryModal) return
     const trimmedName = categoryModal.data.name.trim()
     if (!trimmedName) return
 
-    if (categoryModal.mode === "add") {
-      const baseId = slugify(trimmedName) || `category-${Date.now().toString(36)}`
-      let uniqueId = baseId
-      let counter = 1
-      while (categoryList.some((category) => category.id === uniqueId)) {
-        uniqueId = `${baseId}-${counter}`
-        counter += 1
+    setIsCategorySaving(true)
+    const endpoint =
+      categoryModal.mode === "add"
+        ? "/api/catalog/categories"
+        : `/api/catalog/categories/${categoryModal.categoryId}`
+    const method = categoryModal.mode === "add" ? "POST" : "PUT"
+
+    try {
+      const response = await fetch(endpoint, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(categoryModal.data),
+      })
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) {
+        throw new Error(payload?.error ?? "Unable to save category")
       }
 
-      const newCategory: AdminCategory = {
-        id: uniqueId,
-        ...categoryModal.data,
+      const savedCategory = payload.category as AdminCategory
+      setCategoryList((prev) => {
+        if (categoryModal.mode === "add") {
+          return [...prev, savedCategory]
+        }
+        return prev.map((category) => (category.id === savedCategory.id ? savedCategory : category))
+      })
+      setProductMap((prev) => ({ ...prev, [savedCategory.id]: prev[savedCategory.id] ?? [] }))
+      if (categoryModal.mode === "add") {
+        setSelectedCategoryId(savedCategory.id)
       }
-
-      setCategoryList((prev) => [...prev, newCategory])
-      setProductMap((prev) => ({ ...prev, [uniqueId]: [] }))
-      setSelectedCategoryId(uniqueId)
-    } else {
-      setCategoryList((prev) =>
-        prev.map((category) =>
-          category.id === categoryModal.categoryId ? { ...category, ...categoryModal.data } : category
-        )
+      setCategoryModal(null)
+      setErrorMessage(null)
+      setActionMessage(
+        categoryModal.mode === "add" ? "Category created successfully." : "Category updated successfully."
       )
+    } catch (error) {
+      handleApiError(error)
+    } finally {
+      setIsCategorySaving(false)
     }
-
-    setCategoryModal(null)
   }
 
-  const handleProductSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleProductSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (!productModal) return
 
     const categoryId = productModal.categoryId
     const priceValue = productModal.data.price.trim()
-    const payload: AdminProduct = {
-      id:
-        productModal.mode === "edit" && productModal.productId
-          ? productModal.productId
-          : `mod-${Date.now().toString(36)}`,
-      category: categoryId,
+    const payload = {
+      categoryId,
       name: productModal.data.name.trim(),
       description: productModal.data.description.trim(),
       image: productModal.data.image.trim() || "/images/placeholder.png",
-      price: priceValue ? Number(priceValue) : undefined,
+      price: priceValue ? Number(priceValue) : null,
       specs: parseList(productModal.data.specs),
-      sizes: parseList(productModal.data.sizes),
       highlights: parseList(productModal.data.highlights),
     }
 
-    setProductMap((prev) => {
-      const current = prev[categoryId] ?? []
-      if (productModal.mode === "add") {
+    setIsProductSaving(true)
+    const endpoint =
+      productModal.mode === "add"
+        ? "/api/catalog/products"
+        : `/api/catalog/products/${productModal.productId}`
+    const method = productModal.mode === "add" ? "POST" : "PUT"
+
+    try {
+      const response = await fetch(endpoint, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+      const body = await response.json().catch(() => ({}))
+      if (!response.ok) {
+        throw new Error(body?.error ?? "Unable to save product")
+      }
+
+      const savedProduct = body.product as AdminProduct
+      setProductMap((prev) => {
+        const current = prev[categoryId] ?? []
+        if (productModal.mode === "add") {
+          return {
+            ...prev,
+            [categoryId]: [...current, savedProduct],
+          }
+        }
+
         return {
           ...prev,
-          [categoryId]: [...current, payload],
+          [categoryId]: current.map((product) => (product.id === savedProduct.id ? savedProduct : product)),
         }
-      }
+      })
+      setProductModal(null)
+      setSelectedCategoryId(categoryId)
+      setErrorMessage(null)
+      setActionMessage(
+        productModal.mode === "add" ? "Product created successfully." : "Product updated successfully."
+      )
+    } catch (error) {
+      handleApiError(error)
+    } finally {
+      setIsProductSaving(false)
+    }
+  }
 
-      return {
-        ...prev,
-        [categoryId]: current.map((product) => (product.id === payload.id ? payload : product)),
-      }
-    })
+  const handleCategoryImageSelect = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file || !categoryModal) {
+      event.target.value = ""
+      return
+    }
 
-    setSelectedCategoryId(categoryId)
-    setProductModal(null)
+    try {
+      const dataUrl = await convertFileToDataUrl(file)
+      setCategoryModal((current) =>
+        current ? { ...current, data: { ...current.data, image: dataUrl } } : current
+      )
+    } catch (error) {
+      handleApiError(error)
+    } finally {
+      event.target.value = ""
+    }
+  }
+
+  const handleProductImageSelect = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file || !productModal) {
+      event.target.value = ""
+      return
+    }
+
+    try {
+      const dataUrl = await convertFileToDataUrl(file)
+      setProductModal((current) =>
+        current ? { ...current, data: { ...current.data, image: dataUrl } } : current
+      )
+    } catch (error) {
+      handleApiError(error)
+    } finally {
+      event.target.value = ""
+    }
   }
 
   const clearCategoryImage = () =>
@@ -405,6 +519,21 @@ export default function AdminPage() {
           </div>
         </header>
 
+        {(errorMessage || actionMessage) && (
+          <div className="space-y-3">
+            {errorMessage && (
+              <p className="rounded-2xl border border-red-400/40 bg-red-500/10 px-4 py-3 text-sm text-red-100">
+                {errorMessage}
+              </p>
+            )}
+            {actionMessage && (
+              <p className="rounded-2xl border border-emerald-400/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
+                {actionMessage}
+              </p>
+            )}
+          </div>
+        )}
+
           {ordersMode ? (
             <div className="space-y-6">
               <div className="grid gap-4 md:grid-cols-3">
@@ -462,113 +591,136 @@ export default function AdminPage() {
               </div>
             </div>
           ) : activeView === "categories" ? (
-            <div className="grid gap-6 md:grid-cols-2">
-              {categoryList.map((category) => (
-                <article key={category.id} className="glow-card flex flex-col gap-5 p-6 text-white">
-                <div className="flex flex-col gap-4 md:flex-row">
-                  <div className="relative h-36 w-full overflow-hidden rounded-2xl bg-black/30 md:h-40 md:w-40">
-                    <Image
-                      src={category.image}
-                      alt={category.name}
-                      fill
-                      sizes="(max-width: 768px) 100vw, 160px"
-                      style={{ objectFit: "contain" }}
-                    />
-                  </div>
-                  <div className="flex flex-1 flex-col gap-3">
-                    <h2 className="text-2xl font-semibold">{category.name}</h2>
-                    <p className="text-sm text-white/70">{category.heroLine}</p>
-                    <p className="text-xs text-white/50">{category.description}</p>
-                  </div>
-                </div>
-                <div className="flex flex-wrap gap-3">
-                  <button
-                    type="button"
-                    onClick={() => openCategoryModal("edit", category.id)}
-                    className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-white/20 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-white/80 transition hover:border-white/40"
-                  >
-                    ✏️ Edit
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedCategoryId(category.id)}
-                    className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-[#c4d677]/40 bg-[#c4d677]/10 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[#c4d677] transition hover:border-[#c4d677]/60"
-                  >
-                    🚪 Explore
-                  </button>
-                  <button
-                    type="button"
-                    className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-red-400/30 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-red-200 transition hover:border-red-400/60"
-                  >
-                    🗑 Delete
-                  </button>
-                </div>
-                </article>
-              ))}
-            </div>
-          ) : (
-            <div className="space-y-6">
-              <div className="glow-card flex flex-wrap items-center justify-between gap-3 px-6 py-4 text-sm text-white/70">
-              <div>
-                <p className="text-xs uppercase tracking-[0.5em] text-[#c4d677]">Product stack</p>
-                <p>
-                  {visibleProducts.length} listed under {selectedCategory?.name}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => selectedCategoryId && openProductModal("add", selectedCategoryId)}
-                className="flex items-center gap-2 rounded-2xl border border-white/20 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white/80 transition hover:border-white/40 disabled:opacity-60"
-                disabled={!selectedCategoryId}
-              >
-                ➕ Add another product
-              </button>
-            </div>
+            isLoadingCategories ? (
+              <p className="rounded-2xl border border-white/20 bg-black/30 px-5 py-10 text-center text-sm text-white/70">
+                Syncing categories from Supabase…
+              </p>
+            ) : categoryList.length ? (
               <div className="grid gap-6 md:grid-cols-2">
-                {visibleProducts.map((product) => (
-                  <article key={product.id} className="glow-card flex flex-col gap-4 p-6 text-white">
+                {categoryList.map((category) => (
+                  <article key={category.id} className="glow-card flex flex-col gap-5 p-6 text-white">
                   <div className="flex flex-col gap-4 md:flex-row">
-                    <div className="relative h-32 w-full overflow-hidden rounded-2xl bg-black/40 md:h-36 md:w-36">
+                    <div className="relative h-36 w-full overflow-hidden rounded-2xl bg-black/30 md:h-40 md:w-40">
                       <Image
-                        src={product.image}
-                        alt={product.name}
+                        src={category.image}
+                        alt={category.name}
                         fill
-                        sizes="(max-width: 768px) 100vw, 144px"
+                        sizes="(max-width: 768px) 100vw, 160px"
                         style={{ objectFit: "contain" }}
                       />
                     </div>
-                    <div className="flex flex-1 flex-col gap-2">
-                      <h3 className="text-xl font-semibold">{product.name}</h3>
-                      <p className="text-sm text-white/70">{product.description}</p>
-                      <p className="text-xs text-white/50">
-                        {product.price ? `List rate: ₹${product.price}` : "Rate shared on request"}
-                      </p>
-                      <div className="flex flex-wrap gap-2 text-[11px] text-white/60">
-                        {product.highlights.map((highlight) => (
-                          <span key={highlight} className="rounded-full border border-white/10 px-3 py-1">
-                            {highlight}
-                          </span>
-                        ))}
-                      </div>
+                    <div className="flex flex-1 flex-col gap-3">
+                      <h2 className="text-2xl font-semibold">{category.name}</h2>
+                      <p className="text-sm text-white/70">{category.heroLine}</p>
+                      <p className="text-xs text-white/50">{category.description}</p>
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-3">
                     <button
                       type="button"
-                      onClick={() => openProductModal("edit", product.category, product.id)}
+                      onClick={() => openCategoryModal("edit", category.id)}
                       className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-white/20 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-white/80 transition hover:border-white/40"
                     >
-                      ✏️ Edit product
+                      ✏️ Edit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedCategoryId(category.id)}
+                      className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-[#c4d677]/40 bg-[#c4d677]/10 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[#c4d677] transition hover:border-[#c4d677]/60"
+                    >
+                      🚪 Explore
                     </button>
                     <button
                       type="button"
                       className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-red-400/30 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-red-200 transition hover:border-red-400/60"
+                      disabled
+                      title="Delete via Supabase dashboard"
                     >
                       🗑 Delete
                     </button>
                   </div>
-                </article>
-              ))}
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <p className="rounded-2xl border border-dashed border-white/20 px-5 py-10 text-center text-sm text-white/60">
+                No categories yet. Use the “Add new category” button to seed the catalog.
+              </p>
+            )
+          ) : (
+            <div className="space-y-6">
+              <div className="glow-card flex flex-wrap items-center justify-between gap-3 px-6 py-4 text-sm text-white/70">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.5em] text-[#c4d677]">Product stack</p>
+                  <p>{visibleProducts.length} listed under {selectedCategory?.name}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => selectedCategoryId && openProductModal("add", selectedCategoryId)}
+                  className="flex items-center gap-2 rounded-2xl border border-white/20 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white/80 transition hover:border-white/40 disabled:opacity-60"
+                  disabled={!selectedCategoryId}
+                >
+                  ➕ Add another product
+                </button>
+              </div>
+              {loadingCategoryId === selectedCategoryId ? (
+                <p className="rounded-2xl border border-white/20 bg-black/30 px-5 py-10 text-center text-sm text-white/70">
+                  Loading products for this category…
+                </p>
+              ) : visibleProducts.length ? (
+                <div className="grid gap-6 md:grid-cols-2">
+                  {visibleProducts.map((product) => (
+                    <article key={product.id} className="glow-card flex flex-col gap-4 p-6 text-white">
+                      <div className="flex flex-col gap-4 md:flex-row">
+                        <div className="relative h-32 w-full overflow-hidden rounded-2xl bg-black/40 md:h-36 md:w-36">
+                          <Image
+                            src={product.image}
+                            alt={product.name}
+                            fill
+                            sizes="(max-width: 768px) 100vw, 144px"
+                            style={{ objectFit: "contain" }}
+                          />
+                        </div>
+                        <div className="flex flex-1 flex-col gap-2">
+                          <h3 className="text-xl font-semibold">{product.name}</h3>
+                          <p className="text-sm text-white/70">{product.description}</p>
+                          <p className="text-xs text-white/50">
+                            {product.price !== null ? `List rate: ₹${product.price}` : "Rate shared on request"}
+                          </p>
+                          <div className="flex flex-wrap gap-2 text-[11px] text-white/60">
+                            {product.highlights.map((highlight) => (
+                              <span key={highlight} className="rounded-full border border-white/10 px-3 py-1">
+                                {highlight}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap gap-3">
+                        <button
+                          type="button"
+                          onClick={() => openProductModal("edit", product.categoryId, product.id)}
+                          className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-white/20 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-white/80 transition hover:border-white/40"
+                        >
+                          ✏️ Edit product
+                        </button>
+                        <button
+                          type="button"
+                          className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-red-400/30 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-red-200 transition hover:border-red-400/60"
+                          disabled
+                          title="Delete from Supabase directly"
+                        >
+                          🗑 Delete
+                        </button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              ) : (
+                <p className="rounded-2xl border border-dashed border-white/20 px-5 py-10 text-center text-sm text-white/60">
+                  No products logged yet. Use the buttons above to add SKUs under this category.
+                </p>
+              )}
             </div>
           )}
         </div>
@@ -673,9 +825,14 @@ export default function AdminPage() {
               </button>
               <button
                 type="submit"
-                className="rounded-2xl bg-gradient-to-r from-[#a8b965] to-[#c4d677] px-4 py-2 text-sm font-semibold text-[#121212]"
+                disabled={isCategorySaving}
+                className="rounded-2xl bg-gradient-to-r from-[#a8b965] to-[#c4d677] px-4 py-2 text-sm font-semibold text-[#121212] disabled:opacity-60"
               >
-                {categoryModal.mode === "add" ? "Create" : "Save changes"}
+                {isCategorySaving
+                  ? "Saving…"
+                  : categoryModal.mode === "add"
+                    ? "Create"
+                    : "Save changes"}
               </button>
             </div>
           </form>
@@ -760,21 +917,6 @@ export default function AdminPage() {
                 />
               </label>
               <label className="block text-sm">
-                Sizes (comma separated)
-                <input
-                  type="text"
-                  className="mt-1 w-full rounded-2xl border border-white/20 bg-black/20 px-4 py-2"
-                  value={productModal.data.sizes}
-                  onChange={(event) =>
-                    setProductModal((current) =>
-                      current
-                        ? { ...current, data: { ...current.data, sizes: event.target.value } }
-                        : current
-                    )
-                  }
-                />
-              </label>
-              <label className="block text-sm">
                 Highlights (comma separated)
                 <input
                   type="text"
@@ -833,9 +975,14 @@ export default function AdminPage() {
               </button>
               <button
                 type="submit"
-                className="rounded-2xl bg-gradient-to-r from-[#a8b965] to-[#c4d677] px-4 py-2 text-sm font-semibold text-[#121212]"
+                disabled={isProductSaving}
+                className="rounded-2xl bg-gradient-to-r from-[#a8b965] to-[#c4d677] px-4 py-2 text-sm font-semibold text-[#121212] disabled:opacity-60"
               >
-                {productModal.mode === "add" ? "Create" : "Save changes"}
+                {isProductSaving
+                  ? "Saving…"
+                  : productModal.mode === "add"
+                    ? "Create"
+                    : "Save changes"}
               </button>
             </div>
           </form>

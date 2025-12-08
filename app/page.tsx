@@ -2,10 +2,13 @@ import { Hero } from "@/components/Hero";
 import { CategoryCard } from "@/components/CategoryCard";
 import { Reveal } from "@/components/Reveal";
 import { PromoBanner } from "@/components/PromoBanner";
-import { categories } from "@/data/categories";
+import { fetchCategories } from "@/lib/catalog";
 import Link from "next/link";
 
-export default function HomePage() {
+export const revalidate = 0;
+
+export default async function HomePage() {
+  const categories = await fetchCategories();
   return (
     <div className="space-y-16">
       <Reveal>
@@ -59,11 +62,17 @@ export default function HomePage() {
           <p className="text-2xl font-semibold text-[#4A4A4A]">Product Categories</p>
           <p className="text-sm text-[#999999]">Hardware families engineered for every premium project.</p>
         </div>
-        <div className="grid gap-6 md:grid-cols-2">
-          {categories.map((category) => (
-            <CategoryCard key={category.id} category={category} />
-          ))}
-        </div>
+        {categories.length ? (
+          <div className="grid gap-6 md:grid-cols-2">
+            {categories.map((category) => (
+              <CategoryCard key={category.id} category={category} />
+            ))}
+          </div>
+        ) : (
+          <p className="rounded-2xl border border-[#9B9B9B]/40 bg-[#FFFFFF] px-5 py-10 text-center text-sm text-[#999999]">
+            Catalog is warming up. Add a category in the admin deck to populate this section.
+          </p>
+        )}
       </Reveal>
       <Reveal className="rounded-3xl border border-[#4A4A4A]/20 bg-[#4A4A4A] p-6 text-[#FFFFFF]">
         <p className="text-sm uppercase tracking-[0.4em] text-[#9B9B9B]">Why Choose ModiQ</p>

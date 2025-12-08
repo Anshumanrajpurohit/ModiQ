@@ -3,15 +3,21 @@
 import Link from "next/link";
 import { useState, type ChangeEvent } from "react";
 import { useCart } from "@/context/CartContext";
+import { CheckoutModal } from "@/components/CheckoutModal";
+import type { CheckoutDetails } from "@/types/checkout";
+import { buildWhatsAppOrderMessage, SUPPORT_PHONE_DISPLAY, SUPPORT_PHONE_E164 } from "@/lib/utils";
 
 type ProductPurchasePanelProps = {
   productName: string;
   productId: string;
   priceLabel: string;
   unitPrice: number;
+  categoryLabel: string;
 };
-export function ProductPurchasePanel({ productName, productId, priceLabel, unitPrice }: ProductPurchasePanelProps) {
+export function ProductPurchasePanel({ productName, productId, priceLabel, unitPrice, categoryLabel }: ProductPurchasePanelProps) {
   const [quantity, setQuantity] = useState(1);
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
   const { cartItems, orders, addToCart, placeOrder } = useCart();
 
   const normaliseQuantity = (value: number) => (Number.isNaN(value) || value < 1 ? 1 : Math.floor(value));
@@ -24,17 +30,36 @@ export function ProductPurchasePanel({ productName, productId, priceLabel, unitP
 
   const handleAddToCart = () => {
     if (quantity < 1) return;
-    addToCart({ id: productId, name: productName, price: unitPrice, quantity });
+    addToCart({ id: productId, name: productName, price: unitPrice, quantity, categoryLabel });
     setQuantity(1);
   };
 
-  const handlePlaceOrder = () => {
-    const { message } = placeOrder();
-    window.alert(message);
+  const openCheckout = () => {
+    if (!cartItems.length) {
+      window.alert("Your cart is empty. Add products before placing an order.");
+      return;
+    }
+    setIsCheckoutOpen(true);
+  };
+
+  const submitCheckout = (details: CheckoutDetails) => {
+    if (!cartItems.length) {
+      window.alert("Your cart is empty. Add products before placing an order.");
+      setIsCheckoutOpen(false);
+      return;
+    }
+    setIsSubmittingOrder(true);
+    const message = buildWhatsAppOrderMessage(details, cartItems);
+    const whatsappUrl = `https://wa.me/${SUPPORT_PHONE_E164.replace("+", "")}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, "_blank", "noopener,noreferrer");
+    placeOrder();
+    setIsSubmittingOrder(false);
+    setIsCheckoutOpen(false);
   };
 
   return (
-    <section className="rounded-3xl border border-[#9B9B9B]/40 bg-[#FFFFFF] p-6 text-[#4A4A4A] shadow-lg shadow-[#4A4A4A]/5">
+    <>
+      <section className="rounded-3xl border border-[#9B9B9B]/40 bg-[#FFFFFF] p-6 text-[#4A4A4A] shadow-lg shadow-[#4A4A4A]/5">
       <div className="flex flex-col gap-3 border-b border-[#F0F0F0] pb-5">
         <p className="text-xs uppercase tracking-[0.4em] text-[#A5B867]">Quick Order</p>
         <h3 className="text-2xl font-semibold">{productName}</h3>
@@ -99,7 +124,7 @@ export function ProductPurchasePanel({ productName, productId, priceLabel, unitP
           )}
           <button
             type="button"
-            onClick={handlePlaceOrder}
+            onClick={openCheckout}
             className="mt-4 w-full rounded-full bg-[#4A4A4A] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#000000]"
           >
             Place Order
@@ -107,6 +132,13 @@ export function ProductPurchasePanel({ productName, productId, priceLabel, unitP
           <Link href="/cart" className="mt-3 inline-flex w-full justify-center text-xs font-semibold text-[#A5B867]">
             View full cart →
           </Link>
+          <p className="mt-2 text-[11px] text-[#999999]">
+            Need help? WhatsApp
+            {" "}
+            <a href={`https://wa.me/${SUPPORT_PHONE_E164.replace("+", "")}`} target="_blank" rel="noreferrer" className="text-[#A5B867]">
+              {SUPPORT_PHONE_DISPLAY}
+            </a>
+          </p>
         </div>
         <div className="rounded-2xl border border-[#9B9B9B]/40 bg-[#F8F8F8] p-4">
           <div className="mb-3 flex items-center justify-between">
@@ -133,6 +165,13 @@ export function ProductPurchasePanel({ productName, productId, priceLabel, unitP
           )}
         </div>
       </div>
-    </section>
+      </section>
+      <CheckoutModal
+        open={isCheckoutOpen}
+        onClose={() => setIsCheckoutOpen(false)}
+        onSubmit={submitCheckout}
+        isSubmitting={isSubmittingOrder}
+      />
+    </>
   );
 }
