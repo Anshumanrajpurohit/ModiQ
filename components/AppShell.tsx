@@ -1,7 +1,7 @@
 "use client"
 
 import { usePathname } from "next/navigation"
-import { ReactNode, useMemo } from "react"
+import { ReactNode, Suspense, useMemo } from "react"
 
 import { Navbar } from "@/components/Navbar"
 import { Footer } from "@/components/Footer"
@@ -24,7 +24,9 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <>
-      <Navbar />
+      <Suspense fallback={<div className="h-24" aria-hidden />}>
+        <Navbar />
+      </Suspense>
       <main className="mx-auto mt-24 max-w-6xl px-6 pb-24">{children}</main>
       <Footer />
       <FloatingWhatsApp />
