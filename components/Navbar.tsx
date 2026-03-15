@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import Image from "next/image";
 import companyLogo from "@/public/images/company-logo.png";
 import { NavUserAvatar } from "@/components/NavUserAvatar";
@@ -21,15 +21,21 @@ const PUBLIC_NAV_LINKS = [
 const ADMIN_NAV_LINKS = [
   { label: "Products", href: "/admin" },
   { label: "Orders", href: "/admin?panel=orders" },
+  { label: "Trends", href: "/admin/trends" },
 ];
 
 export function Navbar() {
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "/";
   const searchParams = useSearchParams();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isHydrated, setIsHydrated] = useState(false);
+  const isHydrated = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
   const { user } = useAuth();
-  const isAdmin = user?.role === "admin";
+  // Prevent SSR/client nav divergence from persisted auth state during hydration.
+  const isAdmin = isHydrated && user?.role === "admin";
   const loginHref = useMemo(() => {
     const path = pathname || "/";
     const encoded = encodeURIComponent(path);
@@ -43,10 +49,6 @@ export function Navbar() {
     };
   }, [isMenuOpen]);
 
-  useEffect(() => {
-    setIsHydrated(true);
-  }, []);
-
   const navLinks = isAdmin ? ADMIN_NAV_LINKS : PUBLIC_NAV_LINKS;
 
   const isActive = (href: string) => {
@@ -56,6 +58,10 @@ export function Navbar() {
 
     if (href.startsWith("/admin?panel=orders")) {
       return pathname === "/admin" && searchParams?.get("panel") === "orders";
+    }
+
+    if (href === "/admin/trends") {
+      return pathname.startsWith("/admin/trends");
     }
 
     return href === "/" ? pathname === "/" : pathname.startsWith(href);

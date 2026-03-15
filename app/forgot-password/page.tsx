@@ -28,7 +28,7 @@ export default function ForgotPasswordPage() {
           ))}
         </div>
 
-        <form className="mt-8 space-y-5" aria-disabled>
+        <form className="mt-8 space-y-5">
           <label className="block text-sm font-medium text-white/80">
             Email address
             <input

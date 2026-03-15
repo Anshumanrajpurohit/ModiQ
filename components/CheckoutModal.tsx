@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, type FormEvent } from "react"
+import { useState, type FormEvent } from "react"
 import type { CheckoutDetails } from "@/types/checkout"
 
 type CheckoutModalProps = {
@@ -19,11 +19,10 @@ const emptyDetails: CheckoutDetails = {
 export function CheckoutModal({ open, onClose, onSubmit, isSubmitting }: CheckoutModalProps) {
   const [formState, setFormState] = useState<CheckoutDetails>(emptyDetails)
 
-  useEffect(() => {
-    if (open) {
-      setFormState(emptyDetails)
-    }
-  }, [open])
+  const handleClose = () => {
+    setFormState(emptyDetails)
+    onClose()
+  }
 
   if (!open) {
     return null
@@ -48,7 +47,7 @@ export function CheckoutModal({ open, onClose, onSubmit, isSubmitting }: Checkou
             <p className="text-xs uppercase tracking-[0.4em] text-[#c4d677]">Finalize request</p>
             <h2 className="text-2xl font-semibold">Delivery details</h2>
           </div>
-          <button type="button" onClick={onClose} className="text-white/70" aria-label="Close checkout form">
+          <button type="button" onClick={handleClose} className="text-white/70" aria-label="Close checkout form">
             ✕
           </button>
         </header>
@@ -98,7 +97,7 @@ export function CheckoutModal({ open, onClose, onSubmit, isSubmitting }: Checkou
         <div className="flex flex-wrap gap-3 pt-2">
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleClose}
             className="flex-1 rounded-2xl border border-white/20 px-4 py-2 text-sm text-white/80"
           >
             Cancel

@@ -63,7 +63,8 @@ function readStoredUser(): AuthUser | null {
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(() => readStoredUser())
+  // Keep initial SSR/client render deterministic; hydrate persisted auth after mount.
+  const [user, setUser] = useState<AuthUser | null>(null)
   const readyRef = useRef(false)
 
   useEffect(() => {
@@ -71,7 +72,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     readyRef.current = true
     const stored = readStoredUser()
     if (stored) {
-      setUser(stored)
+      const timer = window.setTimeout(() => setUser(stored), 0)
+      return () => window.clearTimeout(timer)
     }
   }, [])
 

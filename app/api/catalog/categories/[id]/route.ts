@@ -1,7 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server"
 
 import { mapCategoryRow } from "@/lib/catalog-utils"
-import { createSupabaseServiceRoleClient } from "@/lib/supabase"
+import { createServerDatabaseClient } from "@/lib/supabase"
+import type { CategoryRow } from "@/types/catalog"
 import { CategoryValidationError, parseCategoryPayload } from "../validator"
 
 type RouteContext = {
@@ -12,14 +13,15 @@ export async function PUT(request: NextRequest, context: RouteContext) {
   try {
     const params = await context.params
     const payload = await parseCategoryPayload(request)
-    const supabase = createSupabaseServiceRoleClient()
+    const supabase = createServerDatabaseClient()
     const { data, error } = await supabase
       .from("categories")
       .update({
         name: payload.name,
         hero_line: payload.heroLine,
         description: payload.description,
-        image: payload.image,
+        // Keep write fields aligned with the existing DB schema.
+        image_url: payload.image || null,
       })
       .eq("id", params.id)
       .select("*")
@@ -33,13 +35,18 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Category not found" }, { status: 404 })
     }
 
-    return NextResponse.json({ category: mapCategoryRow(data) })
+    return NextResponse.json({ category: mapCategoryRow(data as CategoryRow) })
   } catch (error) {
     if (error instanceof CategoryValidationError) {
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
     console.error("catalog.categories.update", error)
-    return NextResponse.json({ error: "Failed to update category" }, { status: 500 })
+    return NextResponse.json(
+      {
+        error: error instanceof Error ? error.message : "Failed to update category",
+      },
+      { status: 500 },
+    )
   }
 }

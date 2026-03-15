@@ -1,17 +1,20 @@
 import { notFound } from "next/navigation";
 import { ProductGrid } from "@/components/ProductGrid";
 import { Reveal } from "@/components/Reveal";
+import { TrendDiscountCapture } from "@/components/TrendDiscountCapture";
 import { fetchCategoryById, fetchProductsByCategory } from "@/lib/catalog";
 
 export const revalidate = 0;
 
-export default async function CategoryPage({ params }: { params: { category: string } }) {
-  const category = await fetchCategoryById(params.category);
+export default async function CategoryPage({ params }: { params: Promise<{ category: string }> }) {
+  const { category: categorySlug } = await params;
+  const category = await fetchCategoryById(categorySlug);
   if (!category) return notFound();
   const filteredProducts = await fetchProductsByCategory(category.id);
 
   return (
     <div className="space-y-10">
+      <TrendDiscountCapture />
       <Reveal className="rounded-3xl border border-[#9B9B9B]/40 bg-[#FFFFFF] p-6 text-[#4A4A4A]">
         <p className="text-sm uppercase tracking-[0.5em] text-[#A5B867]">{category.name}</p>
         <h1 className="mt-3 text-3xl font-bold">{category.heroLine}</h1>

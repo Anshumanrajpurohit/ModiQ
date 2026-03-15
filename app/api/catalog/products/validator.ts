@@ -9,7 +9,13 @@ export const parseProductPayload = async (request: Request): Promise<ProductPayl
   const name = typeof body.name === "string" ? body.name.trim() : ""
   const description = typeof body.description === "string" ? body.description.trim() : ""
   const image = typeof body.image === "string" ? body.image.trim() : ""
-  const price = typeof body.price === "number" ? body.price : Number(body.price ?? null)
+  const rawPrice = body.price
+  const price =
+    rawPrice === null || rawPrice === undefined || rawPrice === ""
+      ? null
+      : typeof rawPrice === "number"
+        ? rawPrice
+        : Number(rawPrice)
 
   if (!categoryId || !name || !description) {
     throw new ProductValidationError("Category, name, and description are required")
@@ -20,7 +26,7 @@ export const parseProductPayload = async (request: Request): Promise<ProductPayl
     name,
     description,
     image,
-    price: Number.isFinite(price) ? price : null,
+    price: price !== null && Number.isFinite(price) ? price : null,
     specs: normaliseList(body.specs ?? ""),
     highlights: normaliseList(body.highlights ?? ""),
   }

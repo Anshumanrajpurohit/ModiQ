@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 
 export type CartItem = {
   id: string;
@@ -22,9 +22,15 @@ type CartContextValue = {
   cartItems: CartItem[];
   orders: Order[];
   totalAmount: number;
+  discountCode: string | null;
+  discountPercent: number;
+  discountAmount: number;
+  discountedTotal: number;
   addToCart: (item: CartItem) => void;
   updateQuantity: (id: string, quantity: number) => void;
   removeFromCart: (id: string) => void;
+  applyTrendDiscountCode: (code: string | null) => Promise<void>;
+  clearDiscount: () => void;
   placeOrder: () => { message: string };
 };
 
@@ -33,6 +39,8 @@ const CartContext = createContext<CartContextValue | undefined>(undefined);
 export function CartProvider({ children }: { children: ReactNode }) {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [discountCode, setDiscountCode] = useState<string | null>(null);
+  const [discountPercent, setDiscountPercent] = useState(0);
 
   const addToCart = (item: CartItem) => {
     setCartItems((prev) => {
@@ -71,6 +79,47 @@ export function CartProvider({ children }: { children: ReactNode }) {
     [cartItems],
   );
 
+  const discountAmount = useMemo(
+    () => totalAmount * (discountPercent / 100),
+    [discountPercent, totalAmount],
+  );
+
+  const discountedTotal = useMemo(
+    () => totalAmount - discountAmount,
+    [discountAmount, totalAmount],
+  );
+
+  const clearDiscount = useCallback(() => {
+    setDiscountCode(null);
+    setDiscountPercent(0);
+  }, []);
+
+  const applyTrendDiscountCode = useCallback(async (code: string | null) => {
+    const normalizedCode = code?.trim().toUpperCase() ?? "";
+    if (!normalizedCode) {
+      clearDiscount();
+      return;
+    }
+
+    if (normalizedCode === discountCode) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/trends?code=${encodeURIComponent(normalizedCode)}`);
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok || !body?.trend) {
+        clearDiscount();
+        return;
+      }
+
+      setDiscountCode(body.trend.discountCode ?? normalizedCode);
+      setDiscountPercent(body.trend.discountPercent ?? 0);
+    } catch {
+      clearDiscount();
+    }
+  }, [clearDiscount, discountCode]);
+
   const placeOrder = () => {
     if (!cartItems.length) {
       return { message: "Your cart is empty." };
@@ -79,7 +128,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const newOrder: Order = {
       id: orderId,
       items: cartItems,
-      total: totalAmount,
+      total: discountedTotal,
       placedAt: new Date().toISOString(),
       status: "Processing",
     };
@@ -88,10 +137,21 @@ export function CartProvider({ children }: { children: ReactNode }) {
     return { message: `Order ${orderId} placed successfully.` };
   };
 
-  const value = useMemo(
-    () => ({ cartItems, orders, totalAmount, addToCart, updateQuantity, removeFromCart, placeOrder }),
-    [cartItems, orders, totalAmount],
-  );
+  const value: CartContextValue = {
+    cartItems,
+    orders,
+    totalAmount,
+    discountCode,
+    discountPercent,
+    discountAmount,
+    discountedTotal,
+    addToCart,
+    updateQuantity,
+    removeFromCart,
+    applyTrendDiscountCode,
+    clearDiscount,
+    placeOrder,
+  };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

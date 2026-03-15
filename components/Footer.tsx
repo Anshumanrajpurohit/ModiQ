@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+const CURRENT_YEAR = new Date().getUTCFullYear()
+
 const quickLinks = [
   { label: "Home", href: "/" },
   { label: "About", href: "/about" },
@@ -48,7 +50,7 @@ export function Footer() {
           </a>
         </div>
       </div>
-      <p className="mt-10 text-center text-xs text-[#9B9B9B]">© {new Date().getFullYear()} ModiQ Hardware. All rights reserved.</p>
+      <p className="mt-10 text-center text-xs text-[#9B9B9B]">© {CURRENT_YEAR} ModiQ Hardware. All rights reserved.</p>
     </footer>
   );
 }

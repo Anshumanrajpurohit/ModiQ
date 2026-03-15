@@ -16,7 +16,7 @@ export type Category = {
 export const categories: Category[] = [
   {
     id: "hinges",
-    name: "Precision Hinges",
+    name: "Premium Hinges",
     heroLine: "European-grade hinges for smooth, silent cabinetry.",
     description:
       "Fully adjustable auto hinges engineered for long-term alignment, anti-corrosion protection, and effortless installation.",

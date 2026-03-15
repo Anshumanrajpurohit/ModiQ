@@ -151,6 +151,12 @@ export default function AdminPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [isCategorySaving, setIsCategorySaving] = useState(false)
   const [isProductSaving, setIsProductSaving] = useState(false)
+  // Hold the first paint until mounted to keep SSR and initial client markup identical.
+  const [isMounted, setIsMounted] = useState(false)
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   useEffect(() => {
     if (!user) {
@@ -447,7 +453,7 @@ export default function AdminPage() {
       current ? { ...current, data: { ...current.data, image: "" } } : current
     )
 
-  if (!user || user.role !== "admin") {
+  if (!isMounted || !user || user.role !== "admin") {
     return (
       <section className="flex min-h-screen items-center justify-center bg-[#050505] text-white">
         <p className="text-sm tracking-[0.3em] text-white/40">Validating admin clearance…</p>
