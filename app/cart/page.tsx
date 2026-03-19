@@ -19,6 +19,7 @@ export default function CartPage() {
     updateQuantity,
     removeFromCart,
     placeOrder,
+    isOrdersLoading,
   } = useCart();
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
@@ -31,17 +32,26 @@ export default function CartPage() {
     setIsCheckoutOpen(true);
   };
 
-  const submitCheckout = (details: CheckoutDetails) => {
+  const submitCheckout = async (details: CheckoutDetails) => {
     if (!cartItems.length) {
       window.alert("Your cart is empty. Add products before placing an order.");
       setIsCheckoutOpen(false);
       return;
     }
     setIsSubmittingOrder(true);
-    const message = buildWhatsAppOrderMessage(details, cartItems);
+    const itemsSnapshot = [...cartItems];
+    const result = await placeOrder(details);
+    if (!result.success) {
+      window.alert(result.message);
+      setIsSubmittingOrder(false);
+      return;
+    }
+    const message = buildWhatsAppOrderMessage(details, itemsSnapshot, {
+      orderNumber: result.order.orderNumber,
+      totalAmount: result.order.totalAmount,
+    });
     const whatsappUrl = `https://wa.me/${SUPPORT_PHONE_E164.replace("+", "")}?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, "_blank", "noopener,noreferrer");
-    placeOrder();
     setIsSubmittingOrder(false);
     setIsCheckoutOpen(false);
   };
@@ -155,20 +165,24 @@ export default function CartPage() {
             <p className="text-sm uppercase tracking-[0.4em] text-[#A5B867]">Trace Orders</p>
             <h2 className="mt-2 text-2xl font-semibold">Latest updates</h2>
             <div className="mt-4 space-y-4">
-              {orders.length ? (
+              {isOrdersLoading ? (
+                <p className="rounded-2xl border border-dashed border-[#9B9B9B]/40 px-4 py-6 text-center text-sm text-[#999999]">
+                  Loading your orders...
+                </p>
+              ) : orders.length ? (
                 orders.map((order) => (
                   <div key={order.id} className="rounded-2xl border border-[#9B9B9B]/40 bg-[#F8F8F8] p-4 text-sm">
                     <div className="flex items-center justify-between">
-                      <p className="font-semibold text-[#4A4A4A]">{order.id}</p>
-                      <span className="text-xs uppercase tracking-[0.3em] text-[#A5B867]">{order.status}</span>
+                      <p className="font-semibold text-[#4A4A4A]">{order.orderNumber}</p>
+                      <span className="text-xs uppercase tracking-[0.3em] text-[#A5B867]">{order.orderStatus}</span>
                     </div>
                     <p className="mt-2 text-xs text-[#999999]">
-                      {new Date(order.placedAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}
+                      {new Date(order.createdAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}
                     </p>
-                    <p className="mt-2 text-sm font-semibold">Total: ?{order.total.toLocaleString("en-IN")}</p>
+                    <p className="mt-2 text-sm font-semibold">Total: ?{order.totalAmount.toLocaleString("en-IN")}</p>
                     <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-[#6B6B6B]">
                       {order.items.map((item) => (
-                        <li key={`${order.id}-${item.id}`}>{item.name} x {item.quantity}</li>
+                        <li key={`${order.id}-${item.id}`}>{item.productName} x {item.quantity}</li>
                       ))}
                     </ul>
                   </div>

@@ -18,7 +18,7 @@ export function ProductPurchasePanel({ productName, productId, priceLabel, unitP
   const [quantity, setQuantity] = useState(1);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
-  const { cartItems, orders, addToCart, placeOrder } = useCart();
+  const { cartItems, orders, addToCart, placeOrder, isOrdersLoading } = useCart();
 
   const normaliseQuantity = (value: number) => (Number.isNaN(value) || value < 1 ? 1 : Math.floor(value));
 
@@ -42,17 +42,26 @@ export function ProductPurchasePanel({ productName, productId, priceLabel, unitP
     setIsCheckoutOpen(true);
   };
 
-  const submitCheckout = (details: CheckoutDetails) => {
+  const submitCheckout = async (details: CheckoutDetails) => {
     if (!cartItems.length) {
       window.alert("Your cart is empty. Add products before placing an order.");
       setIsCheckoutOpen(false);
       return;
     }
     setIsSubmittingOrder(true);
-    const message = buildWhatsAppOrderMessage(details, cartItems);
+    const itemsSnapshot = [...cartItems];
+    const result = await placeOrder(details);
+    if (!result.success) {
+      window.alert(result.message);
+      setIsSubmittingOrder(false);
+      return;
+    }
+    const message = buildWhatsAppOrderMessage(details, itemsSnapshot, {
+      orderNumber: result.order.orderNumber,
+      totalAmount: result.order.totalAmount,
+    });
     const whatsappUrl = `https://wa.me/${SUPPORT_PHONE_E164.replace("+", "")}?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, "_blank", "noopener,noreferrer");
-    placeOrder();
     setIsSubmittingOrder(false);
     setIsCheckoutOpen(false);
   };
@@ -145,7 +154,9 @@ export function ProductPurchasePanel({ productName, productId, priceLabel, unitP
             <p className="text-sm font-semibold">Orders</p>
             <span className="text-xs text-[#9B9B9B]">{orders.length} order(s)</span>
           </div>
-          {orders.length ? (
+          {isOrdersLoading ? (
+            <p className="text-sm text-[#999999]">Loading orders...</p>
+          ) : orders.length ? (
             <ul className="space-y-2 text-sm">
               {orders.map((order) => (
                 <li
@@ -153,10 +164,10 @@ export function ProductPurchasePanel({ productName, productId, priceLabel, unitP
                   className="rounded-2xl border border-[#9B9B9B]/40 bg-[#FFFFFF] px-4 py-2"
                 >
                   <div className="flex items-center justify-between text-xs uppercase tracking-[0.3em] text-[#A5B867]">
-                    <span>{order.id}</span>
-                    <span>{order.status}</span>
+                    <span>{order.orderNumber}</span>
+                    <span>{order.orderStatus}</span>
                   </div>
-                  <p className="text-sm text-[#4A4A4A]">{order.items[0]?.name ?? "Order"}</p>
+                  <p className="text-sm text-[#4A4A4A]">{order.items[0]?.productName ?? "Order"}</p>
                 </li>
               ))}
             </ul>

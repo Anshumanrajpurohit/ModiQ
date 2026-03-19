@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server"
 
+import { requireAdminApiUser } from "@/lib/auth"
 import { mapCategoryRow } from "@/lib/catalog-utils"
 import { createServerDatabaseClient } from "@/lib/supabase"
 import type { CategoryRow } from "@/types/catalog"
@@ -10,6 +11,11 @@ type RouteContext = {
 }
 
 export async function PUT(request: NextRequest, context: RouteContext) {
+  const { errorResponse } = await requireAdminApiUser()
+  if (errorResponse) {
+    return errorResponse
+  }
+
   try {
     const params = await context.params
     const payload = await parseCategoryPayload(request)

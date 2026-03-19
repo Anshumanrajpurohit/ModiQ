@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ClerkProvider } from "@clerk/nextjs";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "@/context/CartContext";
@@ -27,16 +28,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} bg-[#FFFFFF] text-[#4A4A4A] antialiased dark:bg-[#020202] dark:text-white`}>
-        <ThemeProvider>
-          <AuthProvider>
-            <CartProvider>
-              <AppShell>{children}</AppShell>
-            </CartProvider>
-          </AuthProvider>
-        </ThemeProvider>
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="en" suppressHydrationWarning>
+        <body className={`${geistSans.variable} ${geistMono.variable} bg-[#FFFFFF] text-[#4A4A4A] antialiased dark:bg-[#020202] dark:text-white`}>
+          <ThemeProvider>
+            <AuthProvider>
+              <CartProvider>
+                <AppShell>{children}</AppShell>
+              </CartProvider>
+            </AuthProvider>
+          </ThemeProvider>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

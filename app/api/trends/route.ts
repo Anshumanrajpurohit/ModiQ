@@ -1,5 +1,6 @@
 ﻿import { NextResponse, type NextRequest } from "next/server"
 
+import { requireAdminApiUser } from "@/lib/auth"
 import {
   createTrend,
   getActiveTrends,
@@ -16,6 +17,11 @@ export async function GET(request: NextRequest) {
     const code = searchParams.get("code")
 
     if (scope === "all") {
+      const { errorResponse } = await requireAdminApiUser()
+      if (errorResponse) {
+        return errorResponse
+      }
+
       const trends = await fetchTrends()
       return NextResponse.json({ trends })
     }
@@ -37,6 +43,11 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const { errorResponse } = await requireAdminApiUser()
+  if (errorResponse) {
+    return errorResponse
+  }
+
   try {
     const body = await request.json()
     const payload = validateTrendPayload(body)

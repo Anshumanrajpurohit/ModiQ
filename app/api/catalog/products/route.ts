@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 
+import { requireAdminApiUser } from "@/lib/auth"
 import { fetchProducts, fetchProductsByCategory } from "@/lib/catalog"
 import { mapProductRow } from "@/lib/catalog-utils"
 import { createServerDatabaseClient } from "@/lib/supabase"
@@ -55,6 +56,11 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const { errorResponse } = await requireAdminApiUser()
+  if (errorResponse) {
+    return errorResponse
+  }
+
   try {
     const payload = await parseProductPayload(request)
     const supabase = createServerDatabaseClient()

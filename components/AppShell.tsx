@@ -3,13 +3,13 @@
 import { usePathname } from "next/navigation"
 import { ReactNode, Suspense, useMemo } from "react"
 
-import { Navbar } from "@/components/Navbar"
+import { RoleBasedNavbar } from "@/components/Navbar"
 import { Footer } from "@/components/Footer"
 import { FloatingWhatsApp } from "@/components/FloatingWhatsApp"
 import { SiteAnnouncement } from "@/components/SiteAnnouncement"
 import { LoginPrompt } from "@/components/LoginPrompt"
 
-const BARE_ROUTES = ["/login", "/forgot-password"]
+const BARE_ROUTES = ["/login", "/forgot-password", "/register", "/sgn", "/sgp", "/auth"]
 
 function NavbarFallback() {
   return (
@@ -42,13 +42,13 @@ export function AppShell({ children }: { children: ReactNode }) {
   )
 
   if (bareExperience) {
-    return <div className="min-h-screen">{children}</div>
+    return <>{children}</>
   }
 
   return (
     <>
       <Suspense fallback={<NavbarFallback />}>
-        <Navbar />
+        <RoleBasedNavbar />
       </Suspense>
       <main className="mx-auto mt-24 max-w-6xl px-6 pb-24">{children}</main>
       <Footer />

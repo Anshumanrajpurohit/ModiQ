@@ -1,11 +1,9 @@
 "use client"
 
+import { SignIn, SignUp, useUser } from "@clerk/nextjs"
 import Image from "next/image"
-import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { FormEvent, useMemo, useState } from "react"
-
-import { useAuth } from "@/context/AuthContext"
+import { useEffect, useMemo, useState } from "react"
 
 const hardwareImages = {
   one: "/images/top-right-login.png",
@@ -14,52 +12,109 @@ const hardwareImages = {
   four: "/images/bottom-right-login.png",
 }
 
-const sanitizeNext = (value?: string | null) => {
-  if (!value) return "/"
-  return value.startsWith("/") ? value : "/"
-}
-
 export default function LoginPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { login } = useAuth()
+  const { isLoaded, isSignedIn, user } = useUser()
+  const [isFlipped, setIsFlipped] = useState(false)
 
-  const nextDestination = useMemo(
-    () => sanitizeNext(searchParams?.get("next") ?? searchParams?.get("returnTo")),
-    [searchParams]
-  )
+  const nextParam = useMemo(() => {
+    const next = searchParams?.get("next")
+    return next?.startsWith("/") ? next : null
+  }, [searchParams])
 
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [successMessage, setSuccessMessage] = useState<string | null>(null)
-  const [logoLabel, setLogoLabel] = useState("MODIQ")
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn) return
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    setLoading(true)
-    setError(null)
-    setSuccessMessage(null)
+    const role = user?.publicMetadata?.role
+    const safeDestination =
+      nextParam && (!nextParam.startsWith("/admin") || role === "admin")
+        ? nextParam
+        : role === "admin"
+          ? "/admin"
+          : "/"
 
-    const result = login(email, password)
+    router.replace(safeDestination)
+  }, [isLoaded, isSignedIn, user, nextParam, router])
 
-    if (!result.success) {
-      setLogoLabel("MODIQ")
-      setError("Invalid email or password. Use the mock credentials below to sign in.")
-      setLoading(false)
-      return
-    }
-
-    const roleText = result.user.role === "admin" ? "ADMIN" : "CUSTOMER"
-    setLogoLabel(roleText)
-    setSuccessMessage(`Welcome ${result.user.displayName}. Redirecting you in a moment…`)
-    setLoading(false)
-
-    setTimeout(() => {
-      router.replace(nextDestination)
-    }, 1200)
-  }
+  const clerkAppearance = {
+    variables: {
+      colorPrimary: "#a5b867",
+      colorText: "#3f3a34",
+      colorTextSecondary: "#6f685f",
+      colorBackground: "#fffdf8",
+      colorInputBackground: "#f8f5ec",
+      colorInputText: "#3f3a34",
+      colorNeutral: "#d8d3c8",
+      borderRadius: "16px",
+    },
+    elements: {
+      card: { background: "transparent", boxShadow: "none", border: "none", padding: "0" },
+      header: { display: "none" },
+      footer: { display: "none" },
+      formButtonPrimary: {
+        background: "#a5b867",
+        color: "#2f3224",
+        borderRadius: "16px",
+        boxShadow: "0 14px 30px rgba(148, 164, 85, 0.22)",
+      },
+      formButtonPrimary__hover: {
+        background: "#96a65b",
+        color: "#2f3224",
+      },
+      formFieldLabel: {
+        color: "#5f5951",
+        fontWeight: 600,
+      },
+      formFieldInput: {
+        background: "#f8f5ec",
+        borderColor: "#d9d4c8",
+        color: "#3f3a34",
+        borderRadius: "16px",
+        boxShadow: "inset 0 1px 2px rgba(63, 58, 52, 0.04)",
+      },
+      formFieldInputShowPasswordButton: {
+        color: "#7a746b",
+      },
+      identityPreviewText: {
+        color: "#6f685f",
+      },
+      identityPreviewEditButton: {
+        color: "#94a455",
+      },
+      footerActionLink: {
+        color: "#94a455",
+        fontWeight: 600,
+      },
+      formResendCodeLink: {
+        color: "#94a455",
+        fontWeight: 600,
+      },
+      otpCodeFieldInput: {
+        background: "#f8f5ec",
+        borderColor: "#d9d4c8",
+        color: "#3f3a34",
+      },
+      alertText: {
+        color: "#b42318",
+      },
+      alert: {
+        background: "#fff3f2",
+        borderColor: "#f3c6c3",
+      },
+      socialButtonsBlockButton: {
+        background: "#fbf8f1",
+        borderColor: "#ddd7ca",
+        color: "#3f3a34",
+      },
+      dividerLine: {
+        background: "#e2ddd2",
+      },
+      dividerText: {
+        color: "#8a847a",
+      },
+    },
+  } as const
 
   return (
     <>
@@ -72,9 +127,12 @@ export default function LoginPage() {
 
         body {
           font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-          background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 50%, #3d3d3d 100%);
+          background:
+            radial-gradient(circle at top, rgba(255, 255, 255, 0.95) 0%, rgba(247, 244, 236, 0.96) 32%, rgba(239, 234, 224, 0.98) 100%),
+            linear-gradient(135deg, #fcfaf3 0%, #f2ede2 50%, #ece6db 100%);
           min-height: 100vh;
           overflow-x: hidden;
+          color: #3f3a34;
         }
 
         .login-wrapper {
@@ -82,7 +140,7 @@ export default function LoginPage() {
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 20px;
+          padding: 10px;
           position: relative;
         }
 
@@ -91,7 +149,7 @@ export default function LoginPage() {
         .floating-hardware-3,
         .floating-hardware-4 {
           position: absolute;
-          filter: blur(2px) opacity(0.55);
+          filter: blur(1.5px) opacity(0.46);
           animation-duration: 18s;
           animation-iteration-count: infinite;
           animation-timing-function: ease-in-out;
@@ -103,8 +161,7 @@ export default function LoginPage() {
           height: 400px;
           top: 15%;
           right: 8%;
-          filter: blur(3px) opacity(0.6);
-          animation-name: floatDiagonal;
+          filter: blur(2px) opacity(0.52);
         }
 
         .floating-hardware-2 {
@@ -112,7 +169,6 @@ export default function LoginPage() {
           height: 80px;
           bottom: 20%;
           left: 5%;
-          animation-name: floatReverse;
         }
 
         .floating-hardware-3 {
@@ -120,7 +176,6 @@ export default function LoginPage() {
           height: 300px;
           top: 25%;
           left: 12%;
-          animation-name: floatWild;
         }
 
         .floating-hardware-4 {
@@ -128,78 +183,50 @@ export default function LoginPage() {
           height: 100px;
           bottom: 15%;
           right: 10%;
-          animation-name: floatChaotic;
-        }
-
-        @keyframes floatDiagonal {
-          0% { transform: translate(0, 0) rotate(0deg); }
-          25% { transform: translate(-80px, 60px) rotate(5deg); }
-          50% { transform: translate(-40px, -70px) rotate(-3deg); }
-          75% { transform: translate(70px, -40px) rotate(4deg); }
-          100% { transform: translate(0, 0) rotate(0deg); }
-        }
-
-        @keyframes floatReverse {
-          0% { transform: translate(0, 0) rotate(0deg) scale(1); }
-          33% { transform: translate(90px, -50px) rotate(-4deg) scale(1.1); }
-          66% { transform: translate(-60px, 80px) rotate(6deg) scale(0.95); }
-          100% { transform: translate(0, 0) rotate(0deg) scale(1); }
-        }
-
-        @keyframes floatWild {
-          0% { transform: translate(0, 0) rotate(0deg); }
-          20% { transform: translate(100px, -80px) rotate(8deg); }
-          40% { transform: translate(-90px, 60px) rotate(-6deg); }
-          60% { transform: translate(80px, 90px) rotate(5deg); }
-          80% { transform: translate(-70px, -70px) rotate(-7deg); }
-          100% { transform: translate(0, 0) rotate(0deg); }
-        }
-
-        @keyframes floatChaotic {
-          0% { transform: translate(0, 0) rotate(0deg) scale(1); }
-          25% { transform: translate(-110px, 70px) rotate(-10deg) scale(1.15); }
-          50% { transform: translate(90px, -90px) rotate(8deg) scale(0.9); }
-          75% { transform: translate(-80px, -60px) rotate(12deg) scale(1.05); }
-          100% { transform: translate(0, 0) rotate(0deg) scale(1); }
         }
 
         .container {
-          background: rgba(255, 255, 255, 0.05);
-          backdrop-filter: blur(20px);
-          border-radius: 24px;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-          max-width: 450px;
           width: 100%;
-          padding: 60px 50px;
+          max-width: 460px;
           position: relative;
           z-index: 1;
+        }
+
+        .card {
+          background: rgba(255, 253, 248, 0.86);
+          backdrop-filter: blur(24px);
+          border-radius: 24px;
+          border: 1px solid rgba(217, 211, 200, 0.92);
+          box-shadow:
+            0 24px 60px rgba(63, 58, 52, 0.12),
+            0 2px 0 rgba(255, 255, 255, 0.72) inset;
+          padding: 40px 32px;
         }
 
         .logo {
           font-size: 48px;
           font-weight: 700;
-          color: white;
+          color: #3f3a34;
           margin-bottom: 8px;
           letter-spacing: 2px;
           text-align: center;
         }
 
         .logo span {
-          color: #c4d677;
+          color: #94a455;
         }
 
         .tagline {
-          color: #c4d677;
+          color: #94a455;
           font-size: 13px;
-          margin-bottom: 40px;
+          margin-bottom: 32px;
           letter-spacing: 1.5px;
           text-align: center;
           text-transform: uppercase;
         }
 
         .welcome-text {
-          color: white;
+          color: #3f3a34;
           font-size: 32px;
           font-weight: 700;
           margin-bottom: 15px;
@@ -208,135 +235,40 @@ export default function LoginPage() {
         }
 
         .welcome-subtext {
-          color: rgba(255, 255, 255, 0.7);
+          color: #6f685f;
           font-size: 15px;
           line-height: 1.6;
           text-align: center;
-          margin-bottom: 30px;
-        }
-
-        .mock-credentials {
-          display: grid;
-          gap: 10px;
           margin-bottom: 24px;
         }
 
-        .mock-credentials button {
-          width: 100%;
-          border-radius: 9999px;
-          border: 1px solid rgba(255, 255, 255, 0.2);
-          background: rgba(255, 255, 255, 0.08);
-          padding: 10px 16px;
-          color: white;
+        .flip-helper {
+          margin-top: 20px;
+          text-align: center;
+          color: #776f65;
           font-size: 13px;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          text-transform: uppercase;
         }
 
-        .mock-credentials button span {
-          color: #c4d677;
-          font-size: 11px;
-          letter-spacing: 0.2em;
-        }
-
-        .input-group {
-          margin-bottom: 20px;
-        }
-
-        .input-group label {
-          display: block;
-          color: rgba(255, 255, 255, 0.9);
-          font-size: 14px;
-          font-weight: 600;
-          margin-bottom: 10px;
-        }
-
-        .input-group input {
-          width: 100%;
-          padding: 16px 20px;
-          border: 2px solid rgba(255, 255, 255, 0.15);
-          border-radius: 12px;
-          font-size: 15px;
-          transition: all 0.3s ease;
-          background: rgba(255, 255, 255, 0.08);
-          color: white;
-          backdrop-filter: blur(10px);
-        }
-
-        .input-group input::placeholder {
-          color: rgba(255, 255, 255, 0.4);
-        }
-
-        .input-group input:focus {
-          outline: none;
-          border-color: #a8b965;
-          background: rgba(255, 255, 255, 0.12);
-          box-shadow: 0 0 0 4px rgba(168, 185, 101, 0.15);
-        }
-
-        .forgot-password {
-          text-align: right;
-          margin-bottom: 24px;
-        }
-
-        .forgot-password a {
-          color: rgba(255, 255, 255, 0.6);
-          font-size: 14px;
-          text-decoration: none;
-          transition: color 0.3s ease;
-        }
-
-        .forgot-password a:hover {
-          color: #c4d677;
-        }
-
-        .btn-login {
-          width: 100%;
-          padding: 18px;
-          background: linear-gradient(135deg, #a8b965 0%, #c4d677 100%);
-          color: #2a2a2a;
+        .flip-helper button {
           border: none;
-          border-radius: 12px;
-          font-size: 16px;
+          background: transparent;
+          color: #94a455;
+          font-size: 13px;
           font-weight: 700;
           cursor: pointer;
-          transition: all 0.3s ease;
-          box-shadow: 0 8px 25px rgba(168, 185, 101, 0.4);
-          text-transform: uppercase;
-          letter-spacing: 1px;
+          padding: 0;
+          margin-left: 6px;
         }
 
-        .btn-login:hover:enabled {
-          transform: translateY(-3px);
-          box-shadow: 0 12px 35px rgba(168, 185, 101, 0.5);
-        }
-
-        .btn-login:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-        }
-
-        .status-message {
-          margin-bottom: 16px;
-          text-align: center;
-          font-size: 14px;
-          line-height: 1.5;
-        }
-
-        .status-message.error {
-          color: #ffb5b5;
-        }
-
-        .status-message.success {
-          color: #c4d677;
+        .flip-helper button:hover {
+          color: #7e8f43;
         }
 
         @media (max-width: 768px) {
-          .container {
-            padding: 40px 30px;
+          .card {
+            padding: 32px 20px;
           }
+
           .logo {
             font-size: 36px;
           }
@@ -345,103 +277,61 @@ export default function LoginPage() {
 
       <div className="login-wrapper">
         <div className="floating-hardware-1">
-          <Image
-            src={hardwareImages.one}
-            alt="Premium hinge"
-            width={250}
-            height={400}
-            style={{ width: "100%", height: "auto", objectFit: "contain" }}
-            priority
-          />
+          <Image src={hardwareImages.one} alt="Premium hinge" width={250} height={400} style={{ width: "100%", height: "auto", objectFit: "contain" }} priority />
         </div>
-
         <div className="floating-hardware-2">
-          <Image
-            src={hardwareImages.two}
-            alt="Channel"
-            width={200}
-            height={80}
-            style={{ width: "100%", height: "auto", objectFit: "contain" }}
-          />
+          <Image src={hardwareImages.two} alt="Channel" width={200} height={80} style={{ width: "100%", height: "auto", objectFit: "contain" }} />
         </div>
-
         <div className="floating-hardware-3">
-          <Image
-            src={hardwareImages.three}
-            alt="Drawer system"
-            width={180}
-            height={300}
-            style={{ width: "100%", height: "auto", objectFit: "contain" }}
-          />
+          <Image src={hardwareImages.three} alt="Drawer system" width={180} height={300} style={{ width: "100%", height: "auto", objectFit: "contain" }} />
         </div>
-
         <div className="floating-hardware-4">
-          <Image
-            src={hardwareImages.four}
-            alt="Channel detail"
-            width={220}
-            height={100}
-            style={{ width: "100%", height: "auto", objectFit: "contain" }}
-          />
+          <Image src={hardwareImages.four} alt="Channel detail" width={220} height={100} style={{ width: "100%", height: "auto", objectFit: "contain" }} />
         </div>
 
         <div className="container">
-          <div className="logo">
-            {logoLabel === "MODIQ" ? (
+          <div className="card">
+            <div className="logo">
+              MODI<span>Q</span>
+            </div>
+            <div className="tagline">modern & unique</div>
+            <div className="welcome-text">Welcome to Luxury</div>
+            <div className="welcome-subtext">
+              {isFlipped ? "Lets be a part of community" : "Enter your access credentials to explore the partner showroom."}
+            </div>
+
+            {!isFlipped ? (
               <>
-                MODI<span>Q</span>
+                <SignIn
+                  routing="hash"
+                  signUpUrl="/login"
+                  forceRedirectUrl="/"
+                  appearance={clerkAppearance}
+                />
+                <div className="flip-helper">
+                  Dont have an account?
+                  <button type="button" onClick={() => setIsFlipped(true)}>
+                    Create Account
+                  </button>
+                </div>
               </>
             ) : (
-              logoLabel
+              <>
+                <SignUp
+                  routing="hash"
+                  signInUrl="/login"
+                  forceRedirectUrl="/"
+                  appearance={clerkAppearance}
+                />
+                <div className="flip-helper">
+                  Already a part?
+                  <button type="button" onClick={() => setIsFlipped(false)}>
+                    Sign In
+                  </button>
+                </div>
+              </>
             )}
           </div>
-          <div className="tagline">modern & unique</div>
-
-          <div className="welcome-text">Welcome to Luxury</div>
-          <div className="welcome-subtext">Enter your access credentials to explore the partner showroom.</div>
-
-          {error && (
-            <p className="status-message error" role="alert">
-              {error}
-            </p>
-          )}
-          {successMessage && !error && <p className="status-message success">{successMessage}</p>}
-
-          <form onSubmit={handleSubmit}>
-            <div className="input-group">
-              <label htmlFor="email">Email Address</label>
-              <input
-                type="email"
-                id="email"
-                placeholder="name@studio.com"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                required
-                autoComplete="email"
-              />
-            </div>
-
-            <div className="input-group">
-              <label htmlFor="password">Password</label>
-              <input
-                type="password"
-                id="password"
-                placeholder="Enter your password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                required
-                autoComplete="current-password"
-              />
-            </div>
-
-            <div className="forgot-password">
-              <Link href="/forgot-password">Forgot Password?</Link>
-            </div>
-
-            <button type="submit" className="btn-login" disabled={loading}>
-              {loading ? "Signing you in..." : "Sign In"}
-            </button>
-          </form>
         </div>
       </div>
     </>

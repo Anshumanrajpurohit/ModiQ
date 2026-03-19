@@ -1,36 +1,13 @@
 ﻿"use client"
 
 import Link from "next/link"
-import { useParams, useRouter } from "next/navigation"
-import { useEffect } from "react"
+import { useParams } from "next/navigation"
 
 import { TrendEditor } from "@/components/admin/TrendEditor"
-import { useAuth } from "@/context/AuthContext"
 
 export default function EditTrendPage() {
-  const { user } = useAuth()
-  const router = useRouter()
   const params = useParams<{ id: string }>()
   const trendId = typeof params?.id === "string" ? params.id : ""
-
-  useEffect(() => {
-    if (!user) {
-      router.replace("/login?next=/admin/trends")
-      return
-    }
-
-    if (user.role !== "admin") {
-      router.replace("/")
-    }
-  }, [router, user])
-
-  if (!user || user.role !== "admin") {
-    return (
-      <section className="flex min-h-screen items-center justify-center text-sm text-[#999999]">
-        Validating admin access...
-      </section>
-    )
-  }
 
   if (!trendId) {
     return (

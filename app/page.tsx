@@ -1,6 +1,7 @@
 import { Hero } from "@/components/Hero";
 import { CategoryCard } from "@/components/CategoryCard";
 import { Reveal } from "@/components/Reveal";
+import { AdminRedirect } from "@/components/AdminRedirect";
 import { fetchCategories } from "@/lib/catalog";
 import Link from "next/link";
 
@@ -10,6 +11,7 @@ export default async function HomePage() {
   const categories = await fetchCategories();
   return (
     <div className="space-y-16">
+      <AdminRedirect />
       <Reveal>
         <Hero />
       </Reveal>

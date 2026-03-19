@@ -24,19 +24,15 @@ export function HeroSlider({ trends }: HeroSliderProps) {
     return () => window.clearInterval(timer)
   }, [totalSlides])
 
-  useEffect(() => {
-    if (!totalSlides) return
-    setActiveSlide((current) => (current >= totalSlides ? 0 : current))
-  }, [totalSlides])
-
-  const currentTrend = useMemo(() => trends[activeSlide] ?? null, [activeSlide, trends])
+  const safeActiveSlide = totalSlides ? activeSlide % totalSlides : 0
+  const currentTrend = useMemo(() => trends[safeActiveSlide] ?? null, [safeActiveSlide, trends])
 
   return (
     <section className="space-y-6">
       <article className="relative overflow-hidden rounded-3xl border border-[#9B9B9B]/40 bg-[#4A4A4A] px-6 py-10 text-[#FFFFFF] shadow-2xl shadow-[#4A4A4A]/50 sm:px-10">
         <div className="relative min-h-[420px]">
           {trends.map((trend, index) => {
-            const isActive = index === activeSlide
+            const isActive = index === safeActiveSlide
             const orderNowHref = `/products/${trend.targetCategory}?discount=${encodeURIComponent(trend.discountCode)}`
             return (
               <div
@@ -84,7 +80,7 @@ export function HeroSlider({ trends }: HeroSliderProps) {
         {totalSlides > 1 && (
           <div className="mt-6 flex items-center justify-center gap-2">
             {trends.map((trend, index) => {
-              const isActive = index === activeSlide
+              const isActive = index === safeActiveSlide
               return (
                 <button
                   key={trend.id}

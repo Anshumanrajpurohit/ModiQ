@@ -12,6 +12,7 @@ type CheckoutModalProps = {
 
 const emptyDetails: CheckoutDetails = {
   customerName: "",
+  customerEmail: "",
   contactNumber: "",
   deliveryAddress: "",
 }
@@ -30,7 +31,7 @@ export function CheckoutModal({ open, onClose, onSubmit, isSubmitting }: Checkou
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (!formState.customerName || !formState.contactNumber || !formState.deliveryAddress) {
+    if (!formState.customerName || !formState.customerEmail || !formState.contactNumber || !formState.deliveryAddress) {
       return
     }
     onSubmit(formState)
@@ -62,6 +63,19 @@ export function CheckoutModal({ open, onClose, onSubmit, isSubmitting }: Checkou
             }
             className="mt-1 w-full rounded-2xl border border-white/15 bg-black/30 px-4 py-2"
             placeholder="Jatin Sharma"
+          />
+        </label>
+        <label className="block text-sm">
+          Email address
+          <input
+            type="email"
+            required
+            value={formState.customerEmail}
+            onChange={(event) =>
+              setFormState((prev) => ({ ...prev, customerEmail: event.target.value }))
+            }
+            className="mt-1 w-full rounded-2xl border border-white/15 bg-black/30 px-4 py-2"
+            placeholder="name@studio.com"
           />
         </label>
         <label className="block text-sm">

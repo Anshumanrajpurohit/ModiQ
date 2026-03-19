@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js"
-import { Pool } from "pg"
+import { Pool, type PoolClient } from "pg"
 
 const getSupabaseUrl = () => {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -254,6 +254,31 @@ export const queryServerDatabase = async <TRow = Record<string, unknown>>(
 ) => {
   const result = await getNeonPool().query(text, values)
   return result.rows as TRow[]
+}
+
+export const queryServerDatabaseWithClient = async <TRow = Record<string, unknown>>(
+  client: PoolClient,
+  text: string,
+  values: unknown[] = [],
+) => {
+  const result = await client.query(text, values)
+  return result.rows as TRow[]
+}
+
+export const withServerTransaction = async <T>(callback: (client: PoolClient) => Promise<T>) => {
+  const client = await getNeonPool().connect()
+
+  try {
+    await client.query("BEGIN")
+    const result = await callback(client)
+    await client.query("COMMIT")
+    return result
+  } catch (error) {
+    await client.query("ROLLBACK")
+    throw error
+  } finally {
+    client.release()
+  }
 }
 
 // Backward-compatible exports while callsites migrate to neutral names.

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 
+import { requireAdminApiUser } from "@/lib/auth"
 import { fetchCategories } from "@/lib/catalog"
 import { mapCategoryRow } from "@/lib/catalog-utils"
 import { createServerDatabaseClient } from "@/lib/supabase"
@@ -22,6 +23,11 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const { errorResponse } = await requireAdminApiUser()
+  if (errorResponse) {
+    return errorResponse
+  }
+
   try {
     const payload = await parseCategoryPayload(request)
     const supabase = createServerDatabaseClient()

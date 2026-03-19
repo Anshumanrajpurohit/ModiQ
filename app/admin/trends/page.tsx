@@ -1,10 +1,8 @@
 ﻿"use client"
 
+import { useUser } from "@clerk/nextjs"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
-
-import { useAuth } from "@/context/AuthContext"
 
 type TrendCampaign = {
   id: string
@@ -30,8 +28,7 @@ type AdminCategory = {
 }
 
 export default function AdminTrendsPage() {
-  const { user } = useAuth()
-  const router = useRouter()
+  const { user, isLoaded } = useUser()
   const [trends, setTrends] = useState<TrendCampaign[]>([])
   const [products, setProducts] = useState<AdminProduct[]>([])
   const [categories, setCategories] = useState<AdminCategory[]>([])
@@ -39,16 +36,6 @@ export default function AdminTrendsPage() {
   const [isSavingId, setIsSavingId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (!user) {
-      router.replace("/login?next=/admin/trends")
-      return
-    }
-
-    if (user.role !== "admin") {
-      router.replace("/")
-    }
-  }, [router, user])
 
   useEffect(() => {
     let active = true
@@ -176,7 +163,7 @@ export default function AdminTrendsPage() {
     }
   }
 
-  if (!user || user.role !== "admin") {
+  if (!isLoaded || !user || user.publicMetadata?.role !== "admin") {
     return (
       <section className="flex min-h-screen items-center justify-center text-sm text-[#999999]">
         Validating admin access...
@@ -376,4 +363,9 @@ export default function AdminTrendsPage() {
     </div>
   )
 }
+
+
+
+
+
 

@@ -9,13 +9,6 @@ type AuthCompletePageProps = {
   }
 }
 
-function getAdminEmails() {
-  return (process.env.ADMIN_EMAILS ?? process.env.NEXT_PUBLIC_ADMIN_EMAILS ?? "")
-    .split(",")
-    .map((email) => email.trim().toLowerCase())
-    .filter(Boolean)
-}
-
 const sanitizeReturnTo = (value?: string) => {
   if (!value) return null
   return value.startsWith("/") ? value : null
@@ -28,12 +21,7 @@ export default async function AuthCompletePage({ searchParams }: AuthCompletePag
     redirect("/sgp")
   }
 
-  const primaryEmail =
-    user.emailAddresses.find((email) => email.id === user.primaryEmailAddressId) ??
-    user.emailAddresses[0]
-
-  const normalizedEmail = primaryEmail?.emailAddress?.toLowerCase() ?? ""
-  const isAdmin = getAdminEmails().includes(normalizedEmail)
+  const isAdmin = user.publicMetadata?.role === "admin"
   const fallbackDestination = isAdmin ? "/admin" : "/"
   const destination = sanitizeReturnTo(searchParams?.returnTo) ?? fallbackDestination
 

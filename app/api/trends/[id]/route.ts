@@ -1,5 +1,6 @@
 ﻿import { NextResponse, type NextRequest } from "next/server"
 
+import { requireAdminApiUser } from "@/lib/auth"
 import {
   deleteTrend,
   fetchTrendById,
@@ -14,6 +15,11 @@ type RouteContext = {
 }
 
 export async function GET(_request: NextRequest, context: RouteContext) {
+  const { errorResponse } = await requireAdminApiUser()
+  if (errorResponse) {
+    return errorResponse
+  }
+
   try {
     const { id } = await context.params
     const trend = await fetchTrendById(id)
@@ -33,6 +39,11 @@ export async function GET(_request: NextRequest, context: RouteContext) {
 }
 
 export async function PUT(request: NextRequest, context: RouteContext) {
+  const { errorResponse } = await requireAdminApiUser()
+  if (errorResponse) {
+    return errorResponse
+  }
+
   try {
     const { id } = await context.params
     const body = await request.json()
@@ -72,6 +83,11 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 }
 
 export async function DELETE(_request: NextRequest, context: RouteContext) {
+  const { errorResponse } = await requireAdminApiUser()
+  if (errorResponse) {
+    return errorResponse
+  }
+
   try {
     const { id } = await context.params
     const deleted = await deleteTrend(id)
