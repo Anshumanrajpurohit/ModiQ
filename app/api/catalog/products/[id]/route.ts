@@ -59,3 +59,27 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     )
   }
 }
+
+export async function DELETE(_request: NextRequest, context: RouteContext) {
+  const { errorResponse } = await requireAdminApiUser()
+  if (errorResponse) {
+    return errorResponse
+  }
+
+  try {
+    const params = await context.params
+    const { queryServerDatabase } = await import("@/lib/supabase")
+    await queryServerDatabase('DELETE FROM "products" WHERE "id" = $1', [params.id])
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error("catalog.products.delete", error)
+    return NextResponse.json(
+      {
+        error: error instanceof Error ? error.message : "Failed to delete product",
+      },
+      { status: 500 },
+    )
+  }
+}
+

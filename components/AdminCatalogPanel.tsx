@@ -14,10 +14,12 @@ type AdminCatalogPanelProps = {
   loadingCategoryId: string | null
   onOpenCategory: (categoryId: string) => void
   onEditCategory: (categoryId: string) => void
+  onDeleteCategory: (categoryId: string, categoryName: string) => void
   onBackToCategories: () => void
   onAddCategory: () => void
   onAddProduct: (categoryId: string) => void
   onEditProduct: (categoryId: string, productId: string) => void
+  onDeleteProduct: (categoryId: string, productId: string, productName: string) => void
 }
 
 const formatCurrency = (value: number) =>
@@ -36,10 +38,12 @@ function AdminCatalogPanelComponent({
   loadingCategoryId,
   onOpenCategory,
   onEditCategory,
+  onDeleteCategory,
   onBackToCategories,
   onAddCategory,
   onAddProduct,
   onEditProduct,
+  onDeleteProduct,
 }: AdminCatalogPanelProps) {
   if (!selectedCategory) {
     return isLoadingCategories ? (
@@ -59,7 +63,21 @@ function AdminCatalogPanelComponent({
         </div>
         <div className="grid gap-6 md:grid-cols-2">
           {categories.map((category) => (
-            <article key={category.id} className="glow-card flex flex-col gap-5 p-6 text-[#3f3a34]">
+            <article key={category.id} className="glow-card relative flex flex-col gap-5 p-6 text-[#3f3a34]">
+              <button
+                type="button"
+                aria-label={`Delete ${category.name}`}
+                onClick={() => onDeleteCategory(category.id, category.name)}
+               className="absolute top-2 right-2 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-[#d7d1c4] bg-[#fbf8f1] text-[#7a746b] hover:border-red-200 hover:text-red-600 shadow-sm"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4" aria-hidden="true">
+                  <path d="M3 6h18" />
+                  <path d="M8 6V4h8v2" />
+                  <path d="M19 6l-1 14H6L5 6" />
+                  <path d="M10 11v6" />
+                  <path d="M14 11v6" />
+                </svg>
+              </button>
               <div className="flex flex-col gap-4 md:flex-row">
                 <div className="relative h-36 w-full overflow-hidden rounded-2xl bg-[#f3efe5] md:h-40 md:w-40">
                   <Image
@@ -146,7 +164,21 @@ function AdminCatalogPanelComponent({
       ) : products.length ? (
         <div className="grid gap-6 md:grid-cols-2">
           {products.map((product) => (
-            <article key={product.id} className="glow-card flex flex-col gap-4 p-6 text-[#3f3a34]">
+            <article key={product.id} className="glow-card relative flex flex-col gap-4 p-6 text-[#3f3a34]">
+              <button
+                type="button"
+                aria-label={`Delete ${product.name}`}
+                onClick={() => onDeleteProduct(product.categoryId, product.id, product.name)}
+               className="absolute top-2 right-2 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-[#d7d1c4] bg-[#fbf8f1] text-[#7a746b] hover:border-red-200 hover:text-red-600 shadow-sm"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4" aria-hidden="true">
+                  <path d="M3 6h18" />
+                  <path d="M8 6V4h8v2" />
+                  <path d="M19 6l-1 14H6L5 6" />
+                  <path d="M10 11v6" />
+                  <path d="M14 11v6" />
+                </svg>
+              </button>
               <div className="flex flex-col gap-4 md:flex-row">
                 <div className="relative h-32 w-full overflow-hidden rounded-2xl bg-[#f3efe5] md:h-36 md:w-36">
                   <Image
@@ -194,3 +226,4 @@ function AdminCatalogPanelComponent({
 }
 
 export const AdminCatalogPanel = memo(AdminCatalogPanelComponent)
+

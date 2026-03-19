@@ -30,6 +30,11 @@ type ProductModalState =
   | { mode: "add"; categoryId: string; data: ProductFormData }
   | { mode: "edit"; categoryId: string; productId: string; data: ProductFormData }
 
+type DeleteTargetState =
+  | null
+  | { type: "category"; id: string; label: string }
+  | { type: "product"; id: string; categoryId: string; label: string }
+
 const emptyCategoryForm: CategoryFormData = {
   name: "",
   heroLine: "",
@@ -116,6 +121,7 @@ export default function AdminPage() {
   const [loadingCategoryId, setLoadingCategoryId] = useState<string | null>(null)
   const [categoryModal, setCategoryModal] = useState<CategoryModalState>(null)
   const [productModal, setProductModal] = useState<ProductModalState>(null)
+  const [deleteTarget, setDeleteTarget] = useState<DeleteTargetState>(null)
   const [isCategorySaving, setIsCategorySaving] = useState(false)
   const [isProductSaving, setIsProductSaving] = useState(false)
   const [actionMessage, setActionMessage] = useState<string | null>(null)
@@ -405,6 +411,44 @@ export default function AdminPage() {
     }
   }
 
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return
+
+    const endpoint =
+      deleteTarget.type === "category"
+        ? `/api/catalog/categories/${deleteTarget.id}`
+        : `/api/catalog/products/${deleteTarget.id}`
+
+    try {
+      const response = await fetch(endpoint, { method: "DELETE" })
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(payload?.error ?? "Unable to delete item")
+
+      if (deleteTarget.type === "category") {
+        setCategoryList((current) => current.filter((entry) => entry.id !== deleteTarget.id))
+        setProductMap((current) => {
+          const next = { ...current }
+          delete next[deleteTarget.id]
+          return next
+        })
+        if (selectedCategoryId === deleteTarget.id) {
+          setAdminQuery("products", { category: null })
+        }
+        setActionMessage("Category deleted.")
+      } else {
+        setProductMap((current) => ({
+          ...current,
+          [deleteTarget.categoryId]: (current[deleteTarget.categoryId] ?? []).filter((entry) => entry.id !== deleteTarget.id),
+        }))
+        setActionMessage("Product deleted.")
+      }
+
+      setDeleteTarget(null)
+    } catch (error) {
+      handleApiError(error, "Unable to delete item")
+    }
+  }
+
   return (
     <>
       <section className="min-h-screen bg-[radial-gradient(circle_at_top,_#fbf9f2_0%,_#f3efe5_46%,_#ece7dc_100%)] px-4 py-12 text-[#3f3a34]">
@@ -523,6 +567,7 @@ export default function AdminPage() {
                 if (!category) return
                 setCategoryModal({ mode: "edit", categoryId, data: { name: category.name, heroLine: category.heroLine, description: category.description, image: category.image } })
               }}
+              onDeleteCategory={(categoryId, categoryName) => setDeleteTarget({ type: "category", id: categoryId, label: categoryName })}
               onBackToCategories={() => setAdminQuery("products", { category: null })}
               onAddCategory={() => setCategoryModal({ mode: "add", data: { ...emptyCategoryForm } })}
               onAddProduct={(categoryId) => setProductModal({ mode: "add", categoryId, data: { ...emptyProductForm } })}
@@ -531,9 +576,23 @@ export default function AdminPage() {
                 if (!product) return
                 setProductModal({ mode: "edit", categoryId, productId, data: { name: product.name, description: product.description, image: product.image, price: product.price !== null ? String(product.price) : "", specs: product.specs.join(", "), highlights: product.highlights.join(", ") } })
               }}
+              onDeleteProduct={(categoryId, productId, productName) => setDeleteTarget({ type: "product", id: productId, categoryId, label: productName })}
             />
           )}
         </div>
+
+        {deleteTarget && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#3f3a34]/30 px-4 backdrop-blur-sm">
+            <div className="w-full max-w-sm rounded-3xl border border-[#ddd7ca] bg-[#fffdf8] p-6 text-center text-[#3f3a34] shadow-[0_28px_60px_rgba(63,58,52,0.16)]">
+              <p className="text-sm uppercase tracking-[0.4em] text-[#94a455]">Confirm delete</p>
+              <p className="mt-4 text-base font-medium text-[#3f3a34]">Are you sure you want to delete this?</p>
+              <div className="mt-6 flex justify-center gap-3">
+                <button type="button" onClick={handleDeleteConfirm} className="rounded-2xl bg-[#a5b867] px-4 py-2 text-sm font-semibold text-[#2f3224] shadow-[0_14px_28px_rgba(148,164,85,0.2)] transition hover:bg-[#96a65b]">Confirm</button>
+                <button type="button" onClick={() => setDeleteTarget(null)} className="rounded-2xl border border-[#d4cfc3] bg-[#fbf8f1] px-4 py-2 text-sm text-[#5f5951] transition hover:border-[#a5b867] hover:text-[#3f3a34]">Cancel</button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {categoryModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#3f3a34]/30 px-4 backdrop-blur-sm">
@@ -660,3 +719,4 @@ export default function AdminPage() {
     </>
   )
 }
+
