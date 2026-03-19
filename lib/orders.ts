@@ -398,35 +398,35 @@ export async function fetchAdminOrders(params: ListOrdersParams = {}): Promise<A
   const sortClause = ORDER_SORTS[params.sort ?? ""] ?? ORDER_SORTS.newest
   const { whereClause, values } = getWhereClause(params)
 
-  const countRows = await queryServerDatabase<CountRow>(
-    `SELECT COUNT(*)::int AS count FROM orders ${whereClause}`,
-    values,
-  )
-
-  const summaryRows = await queryServerDatabase<SummaryRow>(
-    `
-      SELECT
-        COUNT(*)::int AS total_orders,
-        COUNT(*) FILTER (WHERE order_status NOT IN ('delivered', 'cancelled'))::int AS active_orders,
-        COUNT(*) FILTER (WHERE payment_status = 'pending')::int AS pending_payment_orders,
-        COALESCE(SUM(total_amount), 0)::numeric AS total_revenue
-      FROM orders
-      ${whereClause}
-    `,
-    values,
-  )
-
-  const orderRows = await queryServerDatabase<OrderRow>(
-    `
-      SELECT *
-      FROM orders
-      ${whereClause}
-      ORDER BY ${sortClause}
-      LIMIT $${values.length + 1}
-      OFFSET $${values.length + 2}
-    `,
-    [...values, pageSize, offset],
-  )
+  const [countRows, summaryRows, orderRows] = await Promise.all([
+    queryServerDatabase<CountRow>(
+      `SELECT COUNT(*)::int AS count FROM orders ${whereClause}`,
+      values,
+    ),
+    queryServerDatabase<SummaryRow>(
+      `
+        SELECT
+          COUNT(*)::int AS total_orders,
+          COUNT(*) FILTER (WHERE order_status NOT IN ('delivered', 'cancelled'))::int AS active_orders,
+          COUNT(*) FILTER (WHERE payment_status = 'pending')::int AS pending_payment_orders,
+          COALESCE(SUM(total_amount), 0)::numeric AS total_revenue
+        FROM orders
+        ${whereClause}
+      `,
+      values,
+    ),
+    queryServerDatabase<OrderRow>(
+      `
+        SELECT *
+        FROM orders
+        ${whereClause}
+        ORDER BY ${sortClause}
+        LIMIT $${values.length + 1}
+        OFFSET $${values.length + 2}
+      `,
+      [...values, pageSize, offset],
+    ),
+  ])
 
   const itemRows = await getOrderItems(orderRows.map((row) => row.id))
 

@@ -7,10 +7,14 @@ import { createServerDatabaseClient } from "@/lib/supabase"
 import type { CategoryRow } from "@/types/catalog"
 import { CategoryValidationError, parseCategoryPayload } from "./validator"
 
+const PUBLIC_CACHE_HEADERS = {
+  "Cache-Control": "public, s-maxage=300, stale-while-revalidate=86400",
+}
+
 export async function GET() {
   try {
     const categories = await fetchCategories()
-    return NextResponse.json({ categories })
+    return NextResponse.json({ categories }, { headers: PUBLIC_CACHE_HEADERS })
   } catch (error) {
     console.error("catalog.categories.GET", error)
     return NextResponse.json(

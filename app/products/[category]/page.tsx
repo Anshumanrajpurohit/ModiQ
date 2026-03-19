@@ -4,7 +4,7 @@ import { Reveal } from "@/components/Reveal";
 import { TrendDiscountCapture } from "@/components/TrendDiscountCapture";
 import { fetchCategoryById, fetchProductsByCategory } from "@/lib/catalog";
 
-export const revalidate = 0;
+export const revalidate = 300;
 
 export default async function CategoryPage({ params }: { params: Promise<{ category: string }> }) {
   const { category: categorySlug } = await params;

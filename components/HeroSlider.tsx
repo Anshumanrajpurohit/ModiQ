@@ -1,7 +1,8 @@
 "use client"
 
+import Image from "next/image"
 import Link from "next/link"
-import { useEffect, useMemo, useState } from "react"
+import { memo, useEffect, useMemo, useState } from "react"
 
 import { ProductGrid } from "@/components/ProductGrid"
 import type { TrendCampaignWithProducts } from "@/types/trends"
@@ -10,7 +11,7 @@ type HeroSliderProps = {
   trends: TrendCampaignWithProducts[]
 }
 
-export function HeroSlider({ trends }: HeroSliderProps) {
+function HeroSliderComponent({ trends }: HeroSliderProps) {
   const [activeSlide, setActiveSlide] = useState(0)
   const totalSlides = trends.length
 
@@ -64,11 +65,15 @@ export function HeroSlider({ trends }: HeroSliderProps) {
                     </div>
                   </div>
                   <div className="overflow-hidden rounded-2xl border border-[#FFFFFF]/20 bg-black/20">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
+                    <Image
                       src={trend.heroImage}
                       alt={trend.title}
+                      width={960}
+                      height={540}
+                      sizes="(min-width: 1024px) 40vw, 100vw"
                       className="h-full max-h-[360px] w-full object-cover"
+                      priority={isActive && index === 0}
+                      unoptimized={trend.heroImage.startsWith("data:")}
                     />
                   </div>
                 </div>
@@ -106,3 +111,5 @@ export function HeroSlider({ trends }: HeroSliderProps) {
     </section>
   )
 }
+
+export const HeroSlider = memo(HeroSliderComponent)

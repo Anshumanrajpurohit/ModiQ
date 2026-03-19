@@ -13,7 +13,7 @@ export function CategoryCard({ category }: { category: CatalogCategory }) {
           src={category.image}
           alt={category.name}
           fill
-          sizes="(min-width: 768px) 50vw, 100vw"
+          sizes="(min-width: 1024px) 32vw, (min-width: 768px) 48vw, 100vw"
           className="object-cover object-center transition duration-500 group-hover:scale-105"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent transition group-hover:bg-black/60" />

@@ -1,5 +1,7 @@
 "use client"
 
+import { memo } from "react"
+
 import type { CatalogCategory } from "@/types/catalog"
 import type { AdminOrdersResult } from "@/types/orders"
 
@@ -45,7 +47,7 @@ const PAYMENT_STATUS_BADGES: Record<string, string> = {
   refunded: "border border-purple-200 bg-purple-50 text-purple-700",
 }
 
-export function AdminDashboardPanel({
+function AdminDashboardPanelComponent({
   categories,
   isLoadingCategories,
   isLoadingOrders,
@@ -143,3 +145,5 @@ export function AdminDashboardPanel({
     </div>
   )
 }
+
+export const AdminDashboardPanel = memo(AdminDashboardPanelComponent)

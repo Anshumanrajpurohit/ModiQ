@@ -1,5 +1,6 @@
 "use client"
 
+import { memo } from "react"
 import Image from "next/image"
 
 import type { CatalogCategory, CatalogProduct } from "@/types/catalog"
@@ -26,7 +27,7 @@ const formatCurrency = (value: number) =>
     maximumFractionDigits: 2,
   }).format(value)
 
-export function AdminCatalogPanel({
+function AdminCatalogPanelComponent({
   categories,
   isLoadingCategories,
   selectedCategory,
@@ -191,3 +192,5 @@ export function AdminCatalogPanel({
     </div>
   )
 }
+
+export const AdminCatalogPanel = memo(AdminCatalogPanelComponent)

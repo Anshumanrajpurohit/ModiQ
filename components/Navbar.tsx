@@ -3,7 +3,7 @@
 import { useClerk, useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, LazyMotion, domAnimation, m } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import companyLogo from "@/public/images/company-logo.png";
@@ -101,7 +101,8 @@ export function Navbar({ variant = "user" }: NavbarProps) {
   };
 
   return (
-    <header className={`fixed inset-x-0 top-0 z-50 border-b backdrop-blur-xl dark:border-white/10 dark:bg-[#050505]/80 ${isAdmin ? "border-[#ddd7ca] bg-[#fffdf8]/92 shadow-[0_12px_32px_rgba(63,58,52,0.08)]" : "border-[#9B9B9B]/40 bg-[#FFFFFF]/90"}`}>
+    <LazyMotion features={domAnimation}>
+      <header className={`fixed inset-x-0 top-0 z-50 border-b backdrop-blur-xl dark:border-white/10 dark:bg-[#050505]/80 ${isAdmin ? "border-[#ddd7ca] bg-[#fffdf8]/92 shadow-[0_12px_32px_rgba(63,58,52,0.08)]" : "border-[#9B9B9B]/40 bg-[#FFFFFF]/90"}`}>
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4 text-[#4A4A4A] dark:text-white">
         <Link
           href="/"
@@ -111,6 +112,7 @@ export function Navbar({ variant = "user" }: NavbarProps) {
             src={companyLogo}
             alt="ModiQ Hardware"
             className="h-8 w-auto"
+            sizes="112px"
             priority
           />
         </Link>
@@ -123,7 +125,7 @@ export function Navbar({ variant = "user" }: NavbarProps) {
               className={`relative rounded-full px-4 py-2 text-sm transition ${isAdmin ? "hover:text-[#8c9d50]" : "hover:text-[#A5B867] dark:hover:text-[#c4d677]"}`}
             >
               {isActive(link.href) && (
-                <motion.span
+                <m.span
                   layoutId="nav-active"
                   className={`absolute inset-0 rounded-full ${isAdmin ? "border border-[#d8d2c5] bg-[#a5b867]/16" : "bg-[#A5B867]/20 dark:bg-[#c4d677]/20"}`}
                   transition={{ type: "spring", stiffness: 350, damping: 30 }}
@@ -226,13 +228,13 @@ export function Navbar({ variant = "user" }: NavbarProps) {
       {/* Mobile Menu */}
       <AnimatePresence>
         {isMenuOpen && (
-          <motion.div
+          <m.div
             className={`fixed inset-0 z-40 ${isAdmin ? "bg-[#3f3a34]/30 backdrop-blur-sm" : "bg-[#4A4A4A]/90"}`}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            <motion.div
+            <m.div
               className={`absolute right-0 top-0 flex h-screen w-4/5 flex-col gap-6 px-6 py-10 shadow-2xl dark:bg-[#050505] dark:text-white ${isAdmin ? "bg-[#fffdf8] text-[#3f3a34]" : "bg-[#FFFFFF] text-[#4A4A4A]"}`}
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
@@ -323,11 +325,12 @@ export function Navbar({ variant = "user" }: NavbarProps) {
                 <p>hello@modiqhardware.com</p>
                 <p>Plot 21, Industrial Estate, Mumbai</p>
               </div>
-            </motion.div>
-          </motion.div>
+            </m.div>
+          </m.div>
         )}
       </AnimatePresence>
     </header>
+    </LazyMotion>
   );
 }
 

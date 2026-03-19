@@ -13,7 +13,7 @@ export function ProductCard({ product }: { product: CatalogProduct }) {
           src={product.image}
           alt={product.name}
           fill
-          sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+          sizes="(min-width: 1280px) 22vw, (min-width: 1024px) 30vw, (min-width: 640px) 46vw, 100vw"
           className="object-cover transition duration-500 hover:scale-105"
         />
         <div className="absolute inset-x-0 bottom-0 flex flex-col gap-1 bg-gradient-to-t from-[#4A4A4A]/95 via-[#4A4A4A]/70 to-transparent p-4 text-[#FFFFFF]">

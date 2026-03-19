@@ -1,6 +1,7 @@
 import { mapProductRow } from "@/lib/catalog-utils"
 import { queryServerDatabase } from "@/lib/supabase"
 import type { ProductRow } from "@/types/catalog"
+import { cache } from "react"
 import type {
   TrendCampaign,
   TrendCampaignWithProducts,
@@ -78,36 +79,36 @@ export const validateTrendPayload = (value: unknown): TrendPayload => {
   }
 }
 
-export const fetchTrends = async (): Promise<TrendCampaign[]> => {
+const fetchTrendsCached = cache(async (): Promise<TrendCampaign[]> => {
   const rows = await queryServerDatabase<TrendRow>(
     "SELECT * FROM trends ORDER BY created_at DESC",
   )
   return rows.map(mapTrendRow)
-}
+})
 
-export const fetchTrendById = async (id: string): Promise<TrendCampaign | null> => {
+const fetchTrendByIdCached = cache(async (id: string): Promise<TrendCampaign | null> => {
   const rows = await queryServerDatabase<TrendRow>("SELECT * FROM trends WHERE id = $1 LIMIT 1", [id])
   return rows[0] ? mapTrendRow(rows[0]) : null
-}
+})
 
-export const fetchActiveTrend = async (): Promise<TrendCampaign | null> => {
+const fetchActiveTrendCached = cache(async (): Promise<TrendCampaign | null> => {
   const rows = await queryServerDatabase<TrendRow>(
     "SELECT * FROM trends WHERE active = true ORDER BY created_at DESC LIMIT 1",
   )
   return rows[0] ? mapTrendRow(rows[0]) : null
-}
+})
 
-export const fetchActiveTrends = async (): Promise<TrendCampaign[]> => {
+const fetchActiveTrendsCached = cache(async (): Promise<TrendCampaign[]> => {
   const rows = await queryServerDatabase<TrendRow>(
     "SELECT * FROM trends WHERE active = true ORDER BY created_at DESC",
   )
   return rows.map(mapTrendRow)
-}
+})
 
 // Alias kept to match callsites that prefer `get*` naming.
-export const getActiveTrends = fetchActiveTrends
+export const getActiveTrends = async () => fetchActiveTrendsCached()
 
-export const fetchActiveTrendByDiscountCode = async (discountCode: string): Promise<TrendCampaign | null> => {
+const fetchActiveTrendByDiscountCodeCached = cache(async (discountCode: string): Promise<TrendCampaign | null> => {
   const normalizedCode = normalizeDiscountCode(discountCode)
   if (!normalizedCode) return null
 
@@ -116,9 +117,10 @@ export const fetchActiveTrendByDiscountCode = async (discountCode: string): Prom
     [normalizedCode],
   )
   return rows[0] ? mapTrendRow(rows[0]) : null
-}
+})
 
-export const fetchTrendProducts = async (productIds: string[]): Promise<TrendCampaignWithProducts["products"]> => {
+const fetchTrendProductsCached = cache(async (productIdsKey: string): Promise<TrendCampaignWithProducts["products"]> => {
+  const productIds = productIdsKey ? productIdsKey.split(",").filter(Boolean) : []
   if (!productIds.length) {
     return []
   }
@@ -134,7 +136,21 @@ export const fetchTrendProducts = async (productIds: string[]): Promise<TrendCam
   )
 
   return rows.map(mapProductRow)
-}
+})
+
+export const fetchTrends = async (): Promise<TrendCampaign[]> => fetchTrendsCached()
+
+export const fetchTrendById = async (id: string): Promise<TrendCampaign | null> => fetchTrendByIdCached(id)
+
+export const fetchActiveTrend = async (): Promise<TrendCampaign | null> => fetchActiveTrendCached()
+
+export const fetchActiveTrends = async (): Promise<TrendCampaign[]> => fetchActiveTrendsCached()
+
+export const fetchActiveTrendByDiscountCode = async (discountCode: string): Promise<TrendCampaign | null> =>
+  fetchActiveTrendByDiscountCodeCached(discountCode)
+
+export const fetchTrendProducts = async (productIds: string[]): Promise<TrendCampaignWithProducts["products"]> =>
+  fetchTrendProductsCached(productIds.join(","))
 
 export const createTrend = async (payload: TrendPayload): Promise<TrendCampaign> => {
   const trendPayload = toTrendWritePayload(payload)

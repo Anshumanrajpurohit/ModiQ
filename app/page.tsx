@@ -5,7 +5,7 @@ import { AdminRedirect } from "@/components/AdminRedirect";
 import { fetchCategories } from "@/lib/catalog";
 import Link from "next/link";
 
-export const revalidate = 0;
+export const revalidate = 300;
 
 export default async function HomePage() {
   const categories = await fetchCategories();

@@ -3,7 +3,7 @@ import { ProductGrid } from "@/components/ProductGrid";
 import { Reveal } from "@/components/Reveal";
 import { fetchCategories, fetchProducts } from "@/lib/catalog";
 
-export const revalidate = 0;
+export const revalidate = 300;
 
 export default async function ProductsPage() {
   const [categories, featured] = await Promise.all([fetchCategories(), fetchProducts(6)]);

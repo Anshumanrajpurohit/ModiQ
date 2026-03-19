@@ -1,4 +1,4 @@
-﻿import { NextResponse, type NextRequest } from "next/server"
+import { NextResponse, type NextRequest } from "next/server"
 
 import { requireAdminApiUser } from "@/lib/auth"
 import {
@@ -9,6 +9,10 @@ import {
   TrendValidationError,
   validateTrendPayload,
 } from "@/lib/trends"
+
+const PUBLIC_CACHE_HEADERS = {
+  "Cache-Control": "public, s-maxage=300, stale-while-revalidate=86400",
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -23,16 +27,16 @@ export async function GET(request: NextRequest) {
       }
 
       const trends = await fetchTrends()
-      return NextResponse.json({ trends })
+      return NextResponse.json({ trends }, { headers: { "Cache-Control": "no-store" } })
     }
 
     if (code) {
       const trend = await fetchActiveTrendByDiscountCode(code)
-      return NextResponse.json({ trend })
+      return NextResponse.json({ trend }, { headers: PUBLIC_CACHE_HEADERS })
     }
 
     const trends = await getActiveTrends()
-    return NextResponse.json({ trends, trend: trends[0] ?? null })
+    return NextResponse.json({ trends, trend: trends[0] ?? null }, { headers: PUBLIC_CACHE_HEADERS })
   } catch (error) {
     console.error("trends.GET", error)
     return NextResponse.json(
@@ -65,4 +69,3 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-

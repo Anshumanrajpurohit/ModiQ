@@ -7,6 +7,10 @@ import { createServerDatabaseClient } from "@/lib/supabase"
 import type { ProductRow } from "@/types/catalog"
 import { parseProductPayload, ProductValidationError } from "./validator"
 
+const PUBLIC_CACHE_HEADERS = {
+  "Cache-Control": "public, s-maxage=300, stale-while-revalidate=86400",
+}
+
 const toErrorPayload = (error: unknown) => {
   if (error && typeof error === "object") {
     const value = error as { message?: unknown; code?: unknown; detail?: unknown; hint?: unknown }
@@ -43,7 +47,7 @@ export async function GET(request: Request) {
 
   try {
     const products = categoryId ? await fetchProductsByCategory(categoryId) : await fetchProducts()
-    return NextResponse.json({ products })
+    return NextResponse.json({ products }, { headers: PUBLIC_CACHE_HEADERS })
   } catch (error) {
     console.error("catalog.products.GET", error)
     return NextResponse.json(

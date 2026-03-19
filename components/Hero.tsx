@@ -9,12 +9,16 @@ export async function Hero() {
     return null
   }
 
-  const trendsWithProducts: TrendCampaignWithProducts[] = await Promise.all(
-    trends.map(async (trend) => ({
-      ...trend,
-      products: await fetchTrendProducts(trend.productIds),
-    })),
-  )
+  const uniqueProductIds = [...new Set(trends.flatMap((trend) => trend.productIds))]
+  const products = await fetchTrendProducts(uniqueProductIds)
+  const productsById = new Map(products.map((product) => [product.id, product]))
+
+  const trendsWithProducts: TrendCampaignWithProducts[] = trends.map((trend) => ({
+    ...trend,
+    products: trend.productIds
+      .map((productId) => productsById.get(productId))
+      .filter((product): product is NonNullable<typeof product> => Boolean(product)),
+  }))
 
   return <HeroSlider trends={trendsWithProducts} />
 }

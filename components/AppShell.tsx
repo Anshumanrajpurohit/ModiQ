@@ -1,13 +1,21 @@
 "use client"
 
+import dynamic from "next/dynamic"
 import { usePathname } from "next/navigation"
 import { ReactNode, Suspense, useMemo } from "react"
 
 import { RoleBasedNavbar } from "@/components/Navbar"
 import { Footer } from "@/components/Footer"
-import { FloatingWhatsApp } from "@/components/FloatingWhatsApp"
-import { SiteAnnouncement } from "@/components/SiteAnnouncement"
-import { LoginPrompt } from "@/components/LoginPrompt"
+
+const FloatingWhatsApp = dynamic(
+  () => import("@/components/FloatingWhatsApp").then((module) => module.FloatingWhatsApp),
+  { ssr: false },
+)
+
+const LoginPrompt = dynamic(
+  () => import("@/components/LoginPrompt").then((module) => module.LoginPrompt),
+  { ssr: false },
+)
 
 const BARE_ROUTES = ["/login", "/forgot-password", "/register", "/sgn", "/sgp", "/auth"]
 
@@ -53,7 +61,6 @@ export function AppShell({ children }: { children: ReactNode }) {
       <main className="mx-auto mt-24 max-w-6xl px-6 pb-24">{children}</main>
       <Footer />
       <FloatingWhatsApp />
-      <SiteAnnouncement />
       <LoginPrompt />
     </>
   )

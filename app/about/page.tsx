@@ -2,7 +2,7 @@ import { Hero } from "@/components/Hero";
 import { Reveal } from "@/components/Reveal";
 import { fetchCategories } from "@/lib/catalog";
 
-export const revalidate = 0;
+export const revalidate = 300;
 
 export default async function AboutPage() {
   const categories = await fetchCategories();

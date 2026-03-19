@@ -1,5 +1,7 @@
 "use client"
 
+import { memo } from "react"
+
 import type { AdminOrdersResult, OrderRecord } from "@/types/orders"
 
 type AdminOrdersPanelProps = {
@@ -62,7 +64,7 @@ const formatDateTime = (value: string | null) => {
 const actionButtonClass =
   "rounded-2xl border px-3 py-2 text-xs font-semibold uppercase tracking-wide transition disabled:cursor-not-allowed disabled:opacity-50"
 
-export function AdminOrdersPanel({
+function AdminOrdersPanelComponent({
   orderSearchInput,
   orderStatusFilter,
   paymentStatusFilter,
@@ -385,3 +387,5 @@ export function AdminOrdersPanel({
     </>
   )
 }
+
+export const AdminOrdersPanel = memo(AdminOrdersPanelComponent)

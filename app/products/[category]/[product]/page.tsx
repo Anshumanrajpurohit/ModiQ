@@ -6,7 +6,7 @@ import { SpecDetailList } from "@/components/SpecDetailList";
 import { ProductPurchasePanel } from "@/components/ProductPurchasePanel";
 import { fetchProductById, fetchCategoryById } from "@/lib/catalog";
 
-export const revalidate = 0;
+export const revalidate = 300;
 
 type ProductPageParams = { category?: string; product?: string };
 type ProductPageProps = { params: Promise<ProductPageParams> };

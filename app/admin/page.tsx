@@ -1,11 +1,9 @@
 "use client"
 
+import dynamic from "next/dynamic"
 import { ChangeEvent, FormEvent, useCallback, useEffect, useMemo, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 
-import { AdminCatalogPanel } from "@/components/AdminCatalogPanel"
-import { AdminDashboardPanel } from "@/components/AdminDashboardPanel"
-import { AdminOrdersPanel } from "@/components/AdminOrdersPanel"
 import type { CatalogCategory, CatalogProduct } from "@/types/catalog"
 import type { AdminOrdersResult, OrderRecord } from "@/types/orders"
 
@@ -88,6 +86,23 @@ const formatCurrency = (value: number) =>
     currency: "INR",
     maximumFractionDigits: 2,
   }).format(value)
+
+const AdminPanelLoading = () => <div className="glow-card px-5 py-10 text-sm text-[#746f66]">Loading panel...</div>
+
+const AdminDashboardPanel = dynamic(
+  () => import("@/components/AdminDashboardPanel").then((module) => module.AdminDashboardPanel),
+  { loading: AdminPanelLoading, ssr: false },
+)
+
+const AdminOrdersPanel = dynamic(
+  () => import("@/components/AdminOrdersPanel").then((module) => module.AdminOrdersPanel),
+  { loading: AdminPanelLoading, ssr: false },
+)
+
+const AdminCatalogPanel = dynamic(
+  () => import("@/components/AdminCatalogPanel").then((module) => module.AdminCatalogPanel),
+  { loading: AdminPanelLoading, ssr: false },
+)
 
 export default function AdminPage() {
   const router = useRouter()

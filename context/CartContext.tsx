@@ -46,7 +46,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [discountPercent, setDiscountPercent] = useState(0)
   const [isOrdersLoading, setIsOrdersLoading] = useState(false)
 
-  const addToCart = (item: CartItem) => {
+  const addToCart = useCallback((item: CartItem) => {
     setCartItems((prev) => {
       const existing = prev.find((entry) => entry.id === item.id)
       if (existing) {
@@ -62,19 +62,19 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }
       return [...prev, item]
     })
-  }
+  }, [])
 
-  const updateQuantity = (id: string, quantity: number) => {
+  const updateQuantity = useCallback((id: string, quantity: number) => {
     setCartItems((prev) =>
       prev
         .map((item) => (item.id === id ? { ...item, quantity: Math.max(1, quantity) } : item))
         .filter((item) => item.quantity > 0),
     )
-  }
+  }, [])
 
-  const removeFromCart = (id: string) => {
+  const removeFromCart = useCallback((id: string) => {
     setCartItems((prev) => prev.filter((item) => item.id !== id))
-  }
+  }, [])
 
   const totalAmount = useMemo(
     () => cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0),
@@ -199,23 +199,42 @@ export function CartProvider({ children }: { children: ReactNode }) {
     [cartItems, clearDiscount, discountCode],
   )
 
-  const value: CartContextValue = {
-    cartItems,
-    orders,
-    totalAmount,
-    discountCode,
-    discountPercent,
-    discountAmount,
-    discountedTotal,
-    isOrdersLoading,
-    addToCart,
-    updateQuantity,
-    removeFromCart,
-    applyTrendDiscountCode,
-    clearDiscount,
-    placeOrder,
-    refreshOrders,
-  }
+  const value = useMemo<CartContextValue>(
+    () => ({
+      cartItems,
+      orders,
+      totalAmount,
+      discountCode,
+      discountPercent,
+      discountAmount,
+      discountedTotal,
+      isOrdersLoading,
+      addToCart,
+      updateQuantity,
+      removeFromCart,
+      applyTrendDiscountCode,
+      clearDiscount,
+      placeOrder,
+      refreshOrders,
+    }),
+    [
+      addToCart,
+      applyTrendDiscountCode,
+      cartItems,
+      clearDiscount,
+      discountAmount,
+      discountCode,
+      discountPercent,
+      discountedTotal,
+      isOrdersLoading,
+      orders,
+      placeOrder,
+      refreshOrders,
+      removeFromCart,
+      totalAmount,
+      updateQuantity,
+    ],
+  )
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>
 }

@@ -277,16 +277,16 @@ export default function LoginPage() {
 
       <div className="login-wrapper">
         <div className="floating-hardware-1">
-          <Image src={hardwareImages.one} alt="Premium hinge" width={250} height={400} style={{ width: "100%", height: "auto", objectFit: "contain" }} priority />
+          <Image src={hardwareImages.one} alt="Premium hinge" width={250} height={400} sizes="250px" style={{ width: "100%", height: "auto", objectFit: "contain" }} priority />
         </div>
         <div className="floating-hardware-2">
-          <Image src={hardwareImages.two} alt="Channel" width={200} height={80} style={{ width: "100%", height: "auto", objectFit: "contain" }} />
+          <Image src={hardwareImages.two} alt="Channel" width={200} height={80} sizes="200px" style={{ width: "100%", height: "auto", objectFit: "contain" }} />
         </div>
         <div className="floating-hardware-3">
-          <Image src={hardwareImages.three} alt="Drawer system" width={180} height={300} style={{ width: "100%", height: "auto", objectFit: "contain" }} />
+          <Image src={hardwareImages.three} alt="Drawer system" width={180} height={300} sizes="180px" style={{ width: "100%", height: "auto", objectFit: "contain" }} />
         </div>
         <div className="floating-hardware-4">
-          <Image src={hardwareImages.four} alt="Channel detail" width={220} height={100} style={{ width: "100%", height: "auto", objectFit: "contain" }} />
+          <Image src={hardwareImages.four} alt="Channel detail" width={220} height={100} sizes="220px" style={{ width: "100%", height: "auto", objectFit: "contain" }} />
         </div>
 
         <div className="container">

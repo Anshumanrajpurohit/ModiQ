@@ -1,17 +1,18 @@
 import { createServerDatabaseClient } from "@/lib/supabase"
 import { mapCategoryRow, mapProductRow } from "@/lib/catalog-utils"
 import type { CatalogCategory, CatalogProduct, CategoryRow, ProductRow } from "@/types/catalog"
+import { cache } from "react"
 
-export async function fetchCategories(): Promise<CatalogCategory[]> {
+const fetchCategoriesCached = cache(async (): Promise<CatalogCategory[]> => {
   const supabase = createServerDatabaseClient()
   const { data, error } = await supabase.from("categories").select("*").order("name", { ascending: true })
   if (error) {
     throw new Error(`Unable to load categories: ${error.message}`)
   }
   return (data as CategoryRow[] | null)?.map(mapCategoryRow) ?? []
-}
+})
 
-export async function fetchCategoryById(categoryId: string): Promise<CatalogCategory | null> {
+const fetchCategoryByIdCached = cache(async (categoryId: string): Promise<CatalogCategory | null> => {
   const supabase = createServerDatabaseClient()
   const { data, error } = await supabase
     .from("categories")
@@ -22,9 +23,9 @@ export async function fetchCategoryById(categoryId: string): Promise<CatalogCate
     throw new Error(`Unable to load category: ${error.message}`)
   }
   return data ? mapCategoryRow(data as CategoryRow) : null
-}
+})
 
-export async function fetchProducts(limit?: number): Promise<CatalogProduct[]> {
+const fetchProductsCached = cache(async (limit?: number): Promise<CatalogProduct[]> => {
   const supabase = createServerDatabaseClient()
   let query = supabase.from("products").select("*").order("created_at", { ascending: false })
   if (typeof limit === "number") {
@@ -35,9 +36,9 @@ export async function fetchProducts(limit?: number): Promise<CatalogProduct[]> {
     throw new Error(`Unable to load products: ${error.message}`)
   }
   return (data as ProductRow[] | null)?.map(mapProductRow) ?? []
-}
+})
 
-export async function fetchProductsByCategory(categoryId: string): Promise<CatalogProduct[]> {
+const fetchProductsByCategoryCached = cache(async (categoryId: string): Promise<CatalogProduct[]> => {
   const supabase = createServerDatabaseClient()
   const { data, error } = await supabase
     .from("products")
@@ -48,9 +49,9 @@ export async function fetchProductsByCategory(categoryId: string): Promise<Catal
     throw new Error(`Unable to load products for ${categoryId}: ${error.message}`)
   }
   return (data as ProductRow[] | null)?.map(mapProductRow) ?? []
-}
+})
 
-export async function fetchProductById(productId?: string): Promise<CatalogProduct | null> {
+const fetchProductByIdCached = cache(async (productId: string): Promise<CatalogProduct | null> => {
   if (!productId) {
     return null
   }
@@ -65,4 +66,28 @@ export async function fetchProductById(productId?: string): Promise<CatalogProdu
     return null
   }
   return data ? mapProductRow(data as ProductRow) : null
+})
+
+export async function fetchCategories(): Promise<CatalogCategory[]> {
+  return fetchCategoriesCached()
+}
+
+export async function fetchCategoryById(categoryId: string): Promise<CatalogCategory | null> {
+  return fetchCategoryByIdCached(categoryId)
+}
+
+export async function fetchProducts(limit?: number): Promise<CatalogProduct[]> {
+  return fetchProductsCached(limit)
+}
+
+export async function fetchProductsByCategory(categoryId: string): Promise<CatalogProduct[]> {
+  return fetchProductsByCategoryCached(categoryId)
+}
+
+export async function fetchProductById(productId?: string): Promise<CatalogProduct | null> {
+  if (!productId) {
+    return null
+  }
+
+  return fetchProductByIdCached(productId)
 }
